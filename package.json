@@ -12,8 +12,8 @@
     "test": "mocha"
   },
   "dependencies": {
-    "idast": "0.0.1",
     "tern": "0.2.0",
+    "idast": "0.0.2",
     "acorn": "0.3.1"
   },
   "devDependencies": {
