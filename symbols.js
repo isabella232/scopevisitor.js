@@ -7,7 +7,7 @@ tern.defineQueryType('symbols', {
     if (!server.options.plugins.doc_comment) throw new Error('doc_comment plugin not loaded');
     if (!server.options.plugins.node) throw new Error('node plugin not loaded');
 
-    if (!file._id) {
+    if (!file.ast._id) {
       // file AST nodes have not been assigned IDs by idast
       idast.assignIds(file.ast);
     }
