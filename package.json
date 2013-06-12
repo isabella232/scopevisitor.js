@@ -12,8 +12,8 @@
     "test": "mocha"
   },
   "dependencies": {
-    "tern": "0.2.0",
     "idast": "0.0.2",
+    "tern": "git://github.com/sqs/tern.git#node_exports-query",
     "acorn": "0.3.1"
   },
   "devDependencies": {
