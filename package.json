@@ -1,0 +1,22 @@
+{
+  "name": "javascript-grapher",
+  "description": "JavaScript grapher for SourceGraph",
+  "author": "Quinn Slack <sqs@sourcegraph.com>",
+  "version": "0.0.1",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sourcegraph/javascript-grapher.git"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "idast": "0.0.1",
+    "tern": "0.2.0",
+    "acorn": "0.3.1"
+  },
+  "devDependencies": {
+    "mocha": "1.10.0"
+  }
+}
