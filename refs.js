@@ -1,3 +1,4 @@
+var util = require('./util');
 var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
 
 // refs takes a `file` parameter and returns an array of SourceGraph refs originating from AST nodes
@@ -10,7 +11,7 @@ tern.defineQueryType('sourcegraph:refs', {
 
     var res = {refs: []};
     idents.inspect(file.ast, function(ident) {
-      var def = getDefinition(server, file, ident);
+      var def = util.getDefinition(server, file, ident);
       if (Object.keys(def) == 0) {
         // console.error('No def found for ident "' + ident.name + '" at file ' + file.name + ':' + ident.start + '-' + ident.end);
         return;
@@ -37,18 +38,6 @@ tern.defineQueryType('sourcegraph:refs', {
     return res;
   }
 });
-
-// getDefinition gets the definition of the identifier that appears in file.
-function getDefinition(server, file, ident) {
-  var res;
-  server.request({
-    query: {type: 'definition', file: file.name, start: ident.start, end: ident.end}
-  }, function(err, dres) {
-    if (err) throw err;
-    res = dres;
-  });
-  return res;
-}
 
 // getDeclIdNode searches the AST for the declaration node at the given start and end character
 // offsets (i.e., its _declSymbol was set by a symbol query of this AST).
