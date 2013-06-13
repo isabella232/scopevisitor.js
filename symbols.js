@@ -36,7 +36,6 @@ tern.defineQueryType('symbols', {
         // record what this ident declares, for later use in computing refs
         nodes.ident.node._declSymbol = symbol.id;
 
-        // TODO(sqs): de-dupe with above
         updateSymbolWithType(symbol, infer.expressionType(nodes.ident).getType());
 
         if (x.doc) {
@@ -57,7 +56,7 @@ tern.defineQueryType('symbols', {
       if (isDecl && !declNode._isExportedDecl) {
         var symbol = {
           id: file.name + '/' + ident.name + ':local:' + ident.start,
-          kind: 'var', // TODO(sqs): set if func
+          kind: 'var',
           name: ident.name,
           declId: ident._id,
           decl: declNode._id,
