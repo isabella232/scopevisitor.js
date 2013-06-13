@@ -2,6 +2,9 @@ var fs = require('fs'), path = require('path'), tern = require('tern/lib/tern');
 
 exports.verbose = false;
 
+var libDir = __dirname;
+var ternDir = path.resolve(__dirname, "node_modules/tern");
+
 exports.startTernServer = function(dir, plugins) {
   function findFile(file, dir, fallbackDir) {
     var local = path.resolve(dir, file);
@@ -12,7 +15,7 @@ exports.startTernServer = function(dir, plugins) {
   }
 
   Object.keys(plugins).forEach(function(plugin) {
-    require(findFile(plugin + '.js', '.', 'node_modules/tern/plugin'));
+    require(findFile(plugin + '.js', libDir, path.join(ternDir, 'plugin')));
   });
   var server = new tern.Server({
     getFile: function(name, c) {
