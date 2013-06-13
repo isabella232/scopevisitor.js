@@ -57,6 +57,26 @@ describe('Refs', function() {
       done();
     });
   });
+  it('returns a ref to external module', function(done) {
+    requestRefs('var m = require("fs");', function(res) {
+      assert.deepEqual(
+        res.refs,
+        [
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:m/id',
+            kind: 'ident',
+            symbol: '@node/fs'
+          },
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:m/init/CallExpression/callee',
+            kind: 'ident',
+            symbol: '@node/require'
+          }
+        ]
+      );
+      done();
+    });
+  });
   it('returns a ref to an exported symbol defined in the same file', function(done) {
     requestRefs('module.exports.x=function(){};var y = module.exports.x;', function(res) {
       assert.deepEqual(

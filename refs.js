@@ -12,25 +12,25 @@ tern.defineQueryType('sourcegraph:refs', {
     var res = {refs: []};
     idents.inspect(file.ast, function(ident) {
       var def = util.getDefinition(server, file, ident);
+      var type = util.getType(server, file, ident);
+
       if (Object.keys(def) == 0) {
         // console.error('No def found for ident "' + ident.name + '" at file ' + file.name + ':' + ident.start + '-' + ident.end);
         return;
       }
       var ref = {astNode: ident._id, kind: 'ident'};
-      if (def.file == file.name) {
-        // internal ref
+      if ((!type.origin || type.origin == file.name) && def.file == file.name) {
+        // internal (same file) ref
         var declId = getDeclIdNode(file, def.start, def.end);
-        if (!declId) return; // ref to unexported symbol
         ref.symbol = declId._declSymbol;
       } else {
         if (!def.origin) throw new Error('No origin');
         // external ref
-        if (storedDefOrigins.indexOf(def.origin) != -1) {
+        if (storedDefOrigins.indexOf(type.origin) != -1) {
           // ref to stored def (not to external file)
           // query for type to get full name of referenced symbol (not just ident); e.g.,
           // "fs.readFile" not just "readFile"
-          var type = util.getType(server, file, ident);
-          ref.symbol = '@' + def.origin + '/' + type.name;
+          ref.symbol = '@' + type.origin + '/' + type.name;
         } else {
           ref.symbol = def.origin + '/' + ident.name;
         }
