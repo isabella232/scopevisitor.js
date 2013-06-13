@@ -96,7 +96,7 @@ function getNodes(file, name, start, end) {
   // be smart about what the logical identifier and declaration is
   switch (ident.node.type) {
 
-  // TODO(sqs): in AssignmentExpressions, set the decl to the rightmost value (i.e., `z` in `x = y = z`)
+  // TODO(sqs): in chained AssignmentExpressions, set the decl to the rightmost value (i.e., `z` in `x = y = z`)
 
   case 'ObjectExpression':
     // set the ident to the key and decl to the value
