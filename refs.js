@@ -30,7 +30,7 @@ tern.defineQueryType('sourcegraph:refs', {
           // query for type to get full name of referenced symbol (not just ident); e.g.,
           // "fs.readFile" not just "readFile"
           var type = util.getType(server, file, ident);
-          ref.symbol = '@' + def.origin + '/' + type.name.replace(/\./g, '/');
+          ref.symbol = '@' + def.origin + '/' + type.name;
         } else {
           ref.symbol = def.origin + '/' + ident.name;
         }

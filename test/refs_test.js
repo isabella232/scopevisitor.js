@@ -50,7 +50,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property',
             kind: 'ident',
-            symbol: '@node/fs/readFile'
+            symbol: '@node/fs.readFile'
           }
         ]
       );
