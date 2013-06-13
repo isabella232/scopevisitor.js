@@ -1,5 +1,5 @@
 var util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern');
+var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
 
 // sourcegraph:symbols takes a `file` parameter and returns an array of SourceGraph symbols defined
 // in the file.
@@ -26,18 +26,18 @@ tern.defineQueryType('sourcegraph:symbols', {
           id: file.name + '/' + x.name,
           kind: 'var',
           name: x.name,
-          declId: nodes.ident.node._id,
-          decl: nodes.decl.node._id,
+          declId: nodes.ident._id,
+          decl: nodes.decl._id,
           exported: true,
         };
 
         // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
-        nodes.decl.node._isExportedDecl = true;
+        nodes.decl._isExportedDecl = true;
 
         // record what this ident declares, for later use in computing refs
-        nodes.ident.node._declSymbol = symbol.id;
+        nodes.ident._declSymbol = symbol.id;
 
-        updateSymbolWithType(symbol, infer.expressionType(nodes.ident).getType());
+        updateSymbolWithType(symbol, util.getType(server, file, nodes.ident).type);
 
         if (x.doc) {
           res.docs.push({
@@ -53,8 +53,9 @@ tern.defineQueryType('sourcegraph:symbols', {
     idents.inspect(file.ast, function(ident) {
       var def = util.getDefinition(server, file, ident);
       var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name);
-      var declNode = getNodes(file, ident.name, ident.start, ident.end).decl.node;
-      if (isDecl && !declNode._isExportedDecl) {
+      if (!isDecl) return;
+      var declNode = getNodes(file, ident.name, ident.start, ident.end).decl;
+      if (isDecl && declNode && !declNode._isExportedDecl) {
         var symbol = {
           id: file.name + '/' + ident.name + ':local:' + ident.start,
           kind: 'var',
@@ -90,21 +91,31 @@ function updateSymbolWithType(symbol, type) {
 // getNodes searches the AST for the most appropriate identifier and declaration to associate with
 // the named symbol at the specified start/end character offsets.
 function getNodes(file, name, start, end) {
-  var ident = infer.findExpressionAround(file.ast, start, end, file.scope);
-  var decl = {scope: ident.scope};
+  var ident, decl;
+  var node = walk.findNodeAround(file.ast, end, function(_t, node) { return node.start <= start; }).node;
+
+  if (!node) {
+    console.error('Failed to find node named "' + name + '" in file ' + file.name + ':' + start + '-' + end);
+    return;
+  }
 
   // be smart about what the logical identifier and declaration is
-  switch (ident.node.type) {
+  switch (node.type) {
 
   // TODO(sqs): in chained AssignmentExpressions, set the decl to the rightmost value (i.e., `z` in `x = y = z`)
 
+  case 'FunctionDeclaration':
+    ident = node.id;
+    decl = node;
+    break;
+
   case 'ObjectExpression':
     // set the ident to the key and decl to the value
-    for (var i = 0; i < ident.node.properties.length; ++i) {
-      var prop = ident.node.properties[i];
+    for (var i = 0; i < node.properties.length; ++i) {
+      var prop = node.properties[i];
       if ((prop.key.name || prop.key.value) == name) {
-        ident.node = prop.key;
-        decl.node = prop.value;
+        ident = prop.key;
+        decl = prop.value;
         break;
       }
     }
@@ -112,10 +123,37 @@ function getNodes(file, name, start, end) {
 
   }
 
+  // fall back to the identifier
+  if (!ident) {
+    ident = walk.findNodeAt(file.ast, start, end, null, idast.base).node;
+  }
+
   // fall back to the enclosing statement
-  if (!decl.node) {
-    decl = infer.findExpressionAround(file.ast, start, end, file.scope, "Statement");
+  if (!decl) {
+    decl = walk.findNodeAround(file.ast, end, nodeType(["Statement", "Declaration"]));
+    if (!decl) {
+      console.error('No enclosing Statement found at', file.name + ':' + start + '-' + end);
+    }
+    decl = decl && decl.node;
   }
 
   return {ident: ident, decl: decl};
+}
+
+function nodeType(types) {
+  return function(_t, node) {
+    for (var i = 0; i < types.length; ++i) {
+      if (node.type.indexOf(types[i]) != -1) return true;
+    }
+    return false;
+  };
+}
+
+function nodeTypeNot(types) {
+  return function(_t, node) {
+    for (var i = 0; i < types.length; ++i) {
+      if (node.type.indexOf(types[i]) != -1) return false;
+    }
+    return true;
+  };
 }

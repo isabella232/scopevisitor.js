@@ -19,7 +19,7 @@ describe('Symbols', function() {
     for (var i = 0; i < symbols.length; ++i) {
       if (symbols[i].name == name) return symbols[i];
     }
-    throw new Error('No symbol with name "' + name + '" found: ' + symbols.map(function(s) { return s.name; }).join(', '));
+    throw new Error('No symbol with name "' + name + '" found (all symbols: ' + JSON.stringify(symbols.map(function(s) { return s.name; })) + ')');
   }
 
   it('returns an array of exported symbols', function(done) {
@@ -31,8 +31,8 @@ describe('Symbols', function() {
               id: 'a.js/x',
               kind: 'var',
               name: 'x',
+              declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property',
               decl: '/Program/body/0/ExpressionStatement',
-              declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression',
               exported: true,
               obj: {typeExpr: 'number'},
             },
@@ -83,6 +83,14 @@ describe('Symbols', function() {
       var x = getSymbolNamed(res.symbols, 'x');
       assert.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/key');
       assert.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/value/FunctionExpression');
+      done();
+    });
+  });
+  it('sets the declId and decl to the name/decl in a func statement', function(done) {
+    requestSymbols('module.exports=f;function f(){}', function(res) {
+      var f = getSymbolNamed(res.symbols, null);
+      assert.equal(f.declId, '/Program/body/1/FunctionDeclaration:f/id');
+      assert.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
       done();
     });
   });
