@@ -12,6 +12,7 @@
     "test": "mocha"
   },
   "dependencies": {
+    "javascript-idents": "0.0.1",
     "idast": "0.0.2",
     "tern": "git://github.com/sqs/tern.git#node_exports-query",
     "acorn": "0.3.1"

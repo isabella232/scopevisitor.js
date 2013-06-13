@@ -38,6 +38,9 @@ tern.defineQueryType('symbols', {
           exported: true,
         };
 
+        // record what this ident declares, for later use in computing refs
+        nodes.ident.node._declSymbol = id;
+
         var type = infer.expressionType(nodes.ident).getType();
         if (type) {
           symbol.obj = {typeExpr: type.toString(5)};
@@ -47,6 +50,8 @@ tern.defineQueryType('symbols', {
         return symbol;
       }));
     });
+
+    file.ast._sourcegraph_annotatedSymbolDeclIds = true;
 
     return res;
   }
