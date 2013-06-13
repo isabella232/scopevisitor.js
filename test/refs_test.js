@@ -102,6 +102,31 @@ describe('Refs', function() {
       done();
     });
   });
+  it('returns a ref to reassigned module.exports', function(done) {
+    requestRefs('module.exports = x;function x() {}', function(res) {
+      assert.deepEqual(
+        res.refs,
+        [
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property',
+            kind: 'ident',
+            symbol: 'a.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right',
+            kind: 'ident',
+            symbol: 'a.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/1/FunctionDeclaration:x/id',
+            kind: 'ident',
+            symbol: 'a.js/module.exports'
+          }
+        ]
+      );
+      done();
+    });
+  });
   it('returns a ref to a local symbol', function(done) {
     requestRefs('var x = 7; x;', function(res) {
       assert.deepEqual(

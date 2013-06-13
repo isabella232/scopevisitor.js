@@ -21,8 +21,14 @@ tern.defineQueryType('sourcegraph:refs', {
       var ref = {astNode: ident._id, kind: 'ident'};
       if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         // internal (same file) ref
-        var declId = getDeclIdNode(file, def.start, def.end);
-        ref.symbol = declId._declSymbol;
+        if (type.exprName == 'exports') {
+          // handle reference to module.exports. the 'Refs returns a ref to reassigned
+          // module.exports' test is an example of where this needs to be special cased.
+          ref.symbol = def.origin + '/module.exports';
+        } else {
+          var declId = getDeclIdNode(file, def.start, def.end);
+          ref.symbol = declId._declSymbol;
+        }
       } else {
         if (!def.origin) throw new Error('No origin');
         // external ref
@@ -51,6 +57,7 @@ function getDeclIdNode(file, start, end) {
   if (expr && expr.node) {
     return expr.node;
   }
+  console.error('No DeclIdNode at file ' + file.name + ':' + start + '-' + end);
 }
 
 var storedDefOrigins = ['ecma5', 'node', 'jquery', 'requirejs', 'browser'];

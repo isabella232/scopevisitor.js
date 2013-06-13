@@ -23,7 +23,7 @@ tern.defineQueryType('sourcegraph:symbols', {
       res.symbols.push.apply(res.symbols, xres.exports.map(function(x) {
         var nodes = getNodes(file, x.name, x.start, x.end);
         var symbol = {
-          id: file.name + '/' + x.name,
+          id: file.name + '/' + (x.name || 'module.exports'),
           kind: 'var',
           name: x.name,
           declId: nodes.ident._id,
@@ -52,7 +52,8 @@ tern.defineQueryType('sourcegraph:symbols', {
 
     idents.inspect(file.ast, function(ident) {
       var def = util.getDefinition(server, file, ident);
-      var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name);
+      var type = util.getType(server, file, ident);
+      var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name && (!type.origin || type.origin == file.name));
       if (!isDecl) return;
       var declNode = getNodes(file, ident.name, ident.start, ident.end).decl;
       if (isDecl && declNode && !declNode._isExportedDecl) {
