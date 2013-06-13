@@ -12,13 +12,13 @@ exports.startTernServer = function(dir, plugins) {
   }
 
   Object.keys(plugins).forEach(function(plugin) {
-    require(findFile(plugin + '.js', dir, 'node_modules/tern/plugin'));
+    require(findFile(plugin + '.js', '.', 'node_modules/tern/plugin'));
   });
   var server = new tern.Server({
     getFile: function(name, c) {
-      fs.readFile(path.resolve(dir, name), 'utf8', c);
+      return fs.readFileSync(name, 'utf8');
     },
-    async: true,
+    async: false,
     plugins: plugins,
     debug: exports.verbose,
     projectDir: dir

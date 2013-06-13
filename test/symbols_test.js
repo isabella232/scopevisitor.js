@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var server = require('./helpers').startTernServer('.', {doc_comment: true, node: true, symbols: true});
+var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, symbols: true});
 
 describe('Symbols', function() {
   function requestSymbols(src, test) {
@@ -15,7 +15,14 @@ describe('Symbols', function() {
     });
   }
 
-  it('returns an array of symbols', function(done) {
+  function getSymbolNamed(symbols, name) {
+    for (var i = 0; i < symbols.length; ++i) {
+      if (symbols[i].name == name) return symbols[i];
+    }
+    throw new Error('No symbol with name "' + name + '" found: ' + symbols.map(function(s) { return s.name; }).join(', '));
+  }
+
+  it('returns an array of exported symbols', function(done) {
     requestSymbols('module.exports.x = 1;', function(res) {
       assert.deepEqual(
         res.symbols,
@@ -34,11 +41,30 @@ describe('Symbols', function() {
       done();
     });
   });
+  it('returns an array of local symbols', function(done) {
+    requestSymbols('var x = 1;', function(res) {
+      assert.deepEqual(
+        res.symbols,
+        [
+          {
+            id: 'a.js/x:local:4',
+            kind: 'var',
+            name: 'x',
+            declId: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
+            decl: '/Program/body/0/VariableDeclaration',
+            exported: false,
+            obj: {typeExpr: 'number'}
+          }
+        ]
+      );
+      done();
+    });
+  });
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
-      assert.equal(res.symbols.length, 1);
-      assert.equal(res.symbols[0].obj.typeExpr, 'fn(a: string, b: number) -> [string]');
-      assert.equal(res.symbols[0].kind, 'func');
+      var x = getSymbolNamed(res.symbols, 'x');
+      assert.equal(x.obj.typeExpr, 'fn(a: string, b: number) -> [string]');
+      assert.equal(x.kind, 'func');
       done();
     });
   });
@@ -54,8 +80,7 @@ describe('Symbols', function() {
   });
   it('sets the declId and decl to the key/value in an object literal', function(done) {
     requestSymbols('module.exports = {w: 1, x: function(){}, z: 7};', function(res) {
-      var x = res.symbols[1];
-      assert.equal(x.name, 'x');
+      var x = getSymbolNamed(res.symbols, 'x');
       assert.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/key');
       assert.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/value/FunctionExpression');
       done();
@@ -63,8 +88,7 @@ describe('Symbols', function() {
   });
   if (0) it('sets the decl to the rightmost value in a chained assignment', function(done) {
     requestSymbols('module.exports.x = module.exports.y = function() {};', function(res) {
-      var x = res.symbols[1];
-      assert.equal(x.name, 'x');
+      var x = getSymbolNamed(res.symbols, 'x');
       assert.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression');
       assert.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/AssignmentExpression/right/FunctionExpression');
       done();

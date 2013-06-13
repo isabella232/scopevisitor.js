@@ -23,15 +23,17 @@ tern.defineQueryType('sourcegraph:refs', {
         if (!declId) return; // ref to unexported symbol
         ref.symbol = declId._declSymbol;
       } else {
+        if (!def.origin) throw new Error('No origin');
         // external ref
         if (storedDefOrigins.indexOf(def.origin) != -1) {
           // ref to stored def (not to external file)
-          ref.symbol = '@';
+          // query for type to get full name of referenced symbol (not just ident); e.g.,
+          // "fs.readFile" not just "readFile"
+          var type = util.getType(server, file, ident);
+          ref.symbol = '@' + def.origin + '/' + type.name.replace(/\./g, '/');
         } else {
-          ref.symbol = '';
+          ref.symbol = def.origin + '/' + ident.name;
         }
-        if (!def.origin) throw new Error('No origin');
-        ref.symbol += def.origin + '/' + ident.name;
       }
       res.refs.push(ref);
     });

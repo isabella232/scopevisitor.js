@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var server = require('./helpers').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
+var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
 
 describe('Refs', function() {
   function requestRefs(src, test) {
@@ -50,7 +50,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property',
             kind: 'ident',
-            symbol: '@node/readFile'
+            symbol: '@node/fs/readFile'
           }
         ]
       );
@@ -68,9 +68,34 @@ describe('Refs', function() {
             symbol: 'a.js/x'
           },
           {
+            astNode: '/Program/body/1/VariableDeclaration/declarations/0:y/id',
+            kind: 'ident',
+            symbol: 'a.js/y:local:34'
+          },
+          {
             astNode: '/Program/body/1/VariableDeclaration/declarations/0:y/init/MemberExpression/property',
             kind: 'ident',
             symbol: 'a.js/x'
+          }
+        ]
+      );
+      done();
+    });
+  });
+  it('returns a ref to a local symbol', function(done) {
+    requestRefs('var x = 7; x;', function(res) {
+      assert.deepEqual(
+        res.refs,
+        [
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
+            kind: 'ident',
+            symbol: 'a.js/x:local:4'
+          },
+          {
+            astNode: '/Program/body/1/ExpressionStatement/expression',
+            kind: 'ident',
+            symbol: 'a.js/x:local:4'
           }
         ]
       );

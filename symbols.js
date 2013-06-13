@@ -1,4 +1,5 @@
-var idast = require('idast'), infer = require('tern/lib/infer'), tern = require('tern');
+var util = require('./util');
+var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern');
 
 // symbols takes a `file` parameter and returns an array of SourceGraph symbols defined in the file.
 tern.defineQueryType('symbols', {
@@ -19,18 +20,9 @@ tern.defineQueryType('symbols', {
     }, function(err, xres) {
       if (err) throw err;
       res.symbols.push.apply(res.symbols, xres.exports.map(function(x) {
-        var id = file.name + '/' + x.name;
-
-        if (x.doc) {
-          res.docs.push({
-            symbol: id,
-            body: x.doc,
-          });
-        }
-
         var nodes = getNodes(file, x.name, x.start, x.end);
         var symbol = {
-          id: id,
+          id: file.name + '/' + x.name,
           kind: 'var',
           name: x.name,
           declId: nodes.ident.node._id,
@@ -38,17 +30,47 @@ tern.defineQueryType('symbols', {
           exported: true,
         };
 
-        // record what this ident declares, for later use in computing refs
-        nodes.ident.node._declSymbol = id;
+        // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
+        nodes.decl.node._isExportedDecl = true;
 
-        var type = infer.expressionType(nodes.ident).getType();
-        if (type) {
-          symbol.obj = {typeExpr: type.toString(5)};
-          symbol.kind = symbol.obj.typeExpr.indexOf('fn(') == -1 ? 'var' : 'func';
+        // record what this ident declares, for later use in computing refs
+        nodes.ident.node._declSymbol = symbol.id;
+
+        // TODO(sqs): de-dupe with above
+        updateSymbolWithType(symbol, infer.expressionType(nodes.ident).getType());
+
+        if (x.doc) {
+          res.docs.push({
+            symbol: symbol.id,
+            body: x.doc,
+          });
         }
 
         return symbol;
       }));
+    });
+
+    idents.inspect(file.ast, function(ident) {
+      var def = util.getDefinition(server, file, ident);
+      var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name);
+      var declNode = getNodes(file, ident.name, ident.start, ident.end).decl.node;
+      if (isDecl && !declNode._isExportedDecl) {
+        var symbol = {
+          id: file.name + '/' + ident.name + ':local:' + ident.start,
+          kind: 'var', // TODO(sqs): set if func
+          name: ident.name,
+          declId: ident._id,
+          decl: declNode._id,
+          exported: false,
+        };
+
+        // record what this ident declares, for later use in computing refs
+        ident._declSymbol = symbol.id;
+
+        updateSymbolWithType(symbol, util.getType(server, file, ident).type);
+
+        res.symbols.push(symbol);
+      }
     });
 
     file.ast._sourcegraph_annotatedSymbolDeclIds = true;
@@ -56,6 +78,14 @@ tern.defineQueryType('symbols', {
     return res;
   }
 });
+
+// updateSymbolWithType sets symbol's obj and kind based on the type.
+function updateSymbolWithType(symbol, type) {
+  if (type) {
+    symbol.obj = {typeExpr: type.toString(5)};
+    symbol.kind = symbol.obj.typeExpr.indexOf('fn(') == -1 ? 'var' : 'func';
+  }
+}
 
 // getNodes searches the AST for the most appropriate identifier and declaration to associate with
 // the named symbol at the specified start/end character offsets.

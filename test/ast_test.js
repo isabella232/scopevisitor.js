@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var server = require('./helpers').startTernServer('.', {ast: true});
+var server = require('../tern_server').startTernServer('.', {ast: true});
 
 describe('AST', function() {
   function nodeInfo(node) {
