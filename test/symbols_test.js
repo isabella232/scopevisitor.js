@@ -94,6 +94,14 @@ describe('Symbols', function() {
       done();
     });
   });
+  it('sets the decl to the whole function expr', function(done) {
+    requestSymbols('module.exports = function() {};', function(res) {
+      var m = getSymbolNamed(res.symbols, null);
+      assert.equal(m.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression');
+      assert.equal(m.decl, '/Program/body/0/ExpressionStatement');
+      done();
+    });
+  });
   if (0) it('sets the decl to the rightmost value in a chained assignment', function(done) {
     requestSymbols('module.exports.x = module.exports.y = function() {};', function(res) {
       var x = getSymbolNamed(res.symbols, 'x');

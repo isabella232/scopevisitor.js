@@ -21,7 +21,7 @@ tern.defineQueryType('sourcegraph:symbols', {
     }, function(err, xres) {
       if (err) throw err;
       res.symbols.push.apply(res.symbols, xres.exports.map(function(x) {
-        var nodes = getNodes(file, x.name, x.start, x.end);
+        var nodes = getNodes(file, x.name, x.start, x.end, !x.name);
         var symbol = {
           id: file.name + '/' + (x.name || 'module.exports'),
           kind: 'var',
@@ -51,8 +51,9 @@ tern.defineQueryType('sourcegraph:symbols', {
     });
 
     idents.inspect(file.ast, function(ident) {
-      var def = util.getDefinition(server, file, ident);
       var type = util.getType(server, file, ident);
+      if (type.exprName == 'exports') return;
+      var def = util.getDefinition(server, file, ident);
       var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name && (!type.origin || type.origin == file.name));
       if (!isDecl) return;
       var declNode = getNodes(file, ident.name, ident.start, ident.end).decl;
@@ -91,9 +92,25 @@ function updateSymbolWithType(symbol, type) {
 
 // getNodes searches the AST for the most appropriate identifier and declaration to associate with
 // the named symbol at the specified start/end character offsets.
-function getNodes(file, name, start, end) {
+function getNodes(file, name, start, end, isModuleExports) {
   var ident, decl;
-  var node = walk.findNodeAround(file.ast, end, function(_t, node) { return node.start <= start; }).node;
+  var node;
+
+  if (isModuleExports) {
+    // find the "module.exports =" AssignmentExpression that likely contains this, and set start/end
+    // to the LHS of the AssignmentExpression (which is "module.exports"). this is because
+    // node_exports has an inconsistency where the start/end of the module.exports reassignment is
+    // just the definition, whereas the start/end of exported properties are of the MemberExpression
+    // "module.exports.foo". this normalizes the former case.
+    node = walk.findNodeAround(file.ast, end, nodeType(["AssignmentExpression"]));
+    if (node) {
+      node = node.node;
+      start = node.left.start;
+      end = node.left.end;
+    }
+  }
+
+  node = walk.findNodeAround(file.ast, end, function(_t, node) { return node.start <= start; }).node;
 
   if (!node) {
     console.error('Failed to find node named "' + name + '" in file ' + file.name + ':' + start + '-' + end);
