@@ -31,7 +31,7 @@ tern.defineQueryType('symbols', {
         var nodes = getNodes(file, x.name, x.start, x.end);
         var symbol = {
           id: id,
-          kind: 'var', // TODO(sqs): set if func
+          kind: 'var',
           name: x.name,
           declId: nodes.ident.node._id,
           decl: nodes.decl.node._id,
