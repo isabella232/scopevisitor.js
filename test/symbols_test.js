@@ -5,7 +5,7 @@ var server = require('../tern_server').startTernServer('.', {doc_comment: true, 
 describe('Symbols', function() {
   function requestSymbols(src, test) {
     server.request({
-      query: {type: 'symbols', file: '#0'},
+      query: {type: 'sourcegraph:symbols', file: '#0'},
       files: [
         {name: 'a.js', type: 'full', text: src},
       ],

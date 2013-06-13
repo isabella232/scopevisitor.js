@@ -1,8 +1,9 @@
 var util = require('./util');
 var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern');
 
-// symbols takes a `file` parameter and returns an array of SourceGraph symbols defined in the file.
-tern.defineQueryType('symbols', {
+// sourcegraph:symbols takes a `file` parameter and returns an array of SourceGraph symbols defined
+// in the file.
+tern.defineQueryType('sourcegraph:symbols', {
   takesFile: true,
   run: function(server, query, file) {
     if (!server.options.plugins.doc_comment) throw new Error('doc_comment plugin not loaded');

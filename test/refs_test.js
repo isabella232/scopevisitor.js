@@ -6,7 +6,7 @@ describe('Refs', function() {
   function requestRefs(src, test) {
     server.addFile('a.js', src);
     server.request({
-      query: {type: "symbols", file: 'a.js'}}, function(err) {
+      query: {type: 'sourcegraph:symbols', file: 'a.js'}}, function(err) {
       if (err) throw err;
     });
     server.request({

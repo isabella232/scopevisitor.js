@@ -25,7 +25,7 @@ server.request({query: {type: 'sourcegraph:ast', file: file}}, function(err, res
   process.stdout.write(']');
 });
 
-server.request({query: {type: 'symbols', file: file}}, function(err, res) {
+server.request({query: {type: 'sourcegraph:symbols', file: file}}, function(err, res) {
   if (err) throw err;
 
   // docs
