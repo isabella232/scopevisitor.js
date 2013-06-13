@@ -14,18 +14,12 @@ console.error('Starting to graph', file);
 
 var server = require('../tern_server').startTernServer(dir, {ast: true, doc_comment: true, node: true, refs: true, symbols: true});
 
-server.request({query: {type: 'ast', file: file}}, function(err, res) {
+server.request({query: {type: 'sourcegraph:ast', file: file}}, function(err, res) {
   if (err) throw err;
+  // AST nodes
   process.stdout.write('{"astNodes":[');
   for (var i = 0; i < res.length; ++i) {
-    var node = res[i];
-    // AST nodes
-    process.stdout.write(JSON.stringify({
-      id: node._id,
-      type: node.type,
-      start: node.start,
-      end: node.end,
-    }));
+    process.stdout.write(JSON.stringify(res[i]));
     if (i != res.length - 1) process.stdout.write(',');
   }
   process.stdout.write(']');
@@ -53,7 +47,6 @@ server.request({query: {type: 'symbols', file: file}}, function(err, res) {
 
 server.request({query: {type: 'sourcegraph:refs', file: file}}, function(err, res) {
   if (err) throw err;
-
   // refs
   process.stdout.write(',"refs":[');
   for (var i = 0; i < res.refs.length; ++i) {
