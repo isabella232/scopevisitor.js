@@ -22,6 +22,7 @@ tern.defineQueryType('sourcegraph:symbols', {
       query: {type: 'node_exports', file: file.name},
     }, function(err, xres) {
       if (err) throw err;
+      var emittedModuleExports = false;
       for (var i = 0; i < xres.exports.length; ++i) {
         var x = xres.exports[i];
         function work(x) {
@@ -35,6 +36,8 @@ tern.defineQueryType('sourcegraph:symbols', {
             decl: nodes.decl._id,
             exported: true,
           };
+
+          if (!x.name) emittedModuleExports = true;
 
           // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
           nodes.decl._isExportedDecl = true;
@@ -60,6 +63,17 @@ tern.defineQueryType('sourcegraph:symbols', {
         else try { work(x) } catch (e) {
           console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name + ':', e);
         }
+      }
+
+      if (!emittedModuleExports) {
+        res.symbols.push({
+          id: file.name + '/module.exports',
+          kind: 'var',
+          name: require('path').basename(file.name),
+          declId: '',
+          decl: '/Program',
+          exported: false,
+        });
       }
     });
 
