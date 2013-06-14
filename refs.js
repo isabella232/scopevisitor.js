@@ -1,5 +1,5 @@
 var util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
+var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
 
 // refs takes a `file` parameter and returns an array of SourceGraph refs originating from AST nodes
 // in the file.
@@ -20,7 +20,13 @@ tern.defineQueryType('sourcegraph:refs', {
       }
 
       var ref = {astNode: ident._id, kind: 'ident'};
-      if ((!type.origin || type.origin == file.name) && def.file == file.name) {
+      if (type.name == 'exports') {
+        // external module ref
+        // ex: "m" in "var m = require('foo')"
+        // tern doesn't set the type.origin of m to "foo" in this case, so we have to manually
+        // resolve the ident to the module
+        ref.symbol = getModuleRef(server, file, def.start, def.end) + '/module.exports';
+      } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         // internal (same file) ref
         if (type.exprName == 'exports') {
           // handle reference to module.exports. the 'Refs returns a ref to reassigned
@@ -47,6 +53,19 @@ tern.defineQueryType('sourcegraph:refs', {
     return res;
   }
 });
+
+// getModuleRef takes a start+end containing an ident whose value is an node.js module's exports
+// (e.g., "var m = require('foo')"), and returns the module's filename.
+function getModuleRef(server, file, start, end) {
+  var decl = infer.findExpressionAt(file.ast, start, end, file.scope);
+  // iterate over module props. this will fail if the module re-exports a def from another origin
+  // and we happen to iterate over it first here.
+  var moduleProps = infer.expressionType(decl).types[0].props;
+  // no hasOwnProperty check needed because moduleProps has a stripped object prototype (from tern)??
+  for (var key in moduleProps) {
+    if (moduleProps[key].origin) return moduleProps[key].origin;
+  }
+}
 
 // getDeclIdNode searches the AST for the declaration node at the given start and end character
 // offsets (i.e., its _declSymbol was set by a symbol query of this AST).

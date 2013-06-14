@@ -36,6 +36,40 @@ describe('Refs', function() {
       done();
     });
   });
+  it('returns a ref to an external symbol (indirect)', function(done) {
+    requestRefs('var b = require("./test/testdata/b");b;b.x', function(res) {
+      res.refs.should.eql(
+        [
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/id',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js'
+          },
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/init/CallExpression/callee',
+            kind: 'ident',
+            symbol: '@node/require'
+          },
+          {
+            astNode: '/Program/body/1/ExpressionStatement/expression',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js'
+          },
+          {
+            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js'
+          },
+          {
+            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js/x'
+          }
+        ]
+      );
+      done();
+    });
+  });
   it('returns a ref to a predef symbol', function(done) {
     requestRefs('require("fs").readFile', function(res) {
       res.refs.should.eql(
