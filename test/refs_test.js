@@ -70,6 +70,45 @@ describe('Refs', function() {
       done();
     });
   });
+  it('returns a ref to an external symbol (indirect, with reassigned module.exports)', function(done) {
+    requestRefs('var c = require("./test/testdata/c");c;c();c.d()', function(res) {
+      res.refs.should.eql(
+        [
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:c/id',
+            kind: 'ident',
+            symbol: 'test/testdata/c.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0:c/init/CallExpression/callee',
+            kind: 'ident',
+            symbol: '@node/require'
+          },
+          {
+            astNode: '/Program/body/1/ExpressionStatement/expression',
+            kind: 'ident',
+            symbol: 'test/testdata/c.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee',
+            kind: 'ident',
+            symbol: 'test/testdata/c.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object',
+            kind: 'ident',
+            symbol: 'test/testdata/c.js/module.exports'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property',
+            kind: 'ident',
+            symbol: 'test/testdata/c.js/d'
+          }
+        ]
+      );
+      done();
+    });
+  });
   it('returns a ref to a predef symbol', function(done) {
     requestRefs('require("fs").readFile', function(res) {
       res.refs.should.eql(
