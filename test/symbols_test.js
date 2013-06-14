@@ -24,9 +24,15 @@ describe('Symbols', function() {
     throw new Error('No symbol with name "' + name + '" found (all symbols: ' + JSON.stringify(symbols.map(function(s) { return s.name; })) + ')');
   }
 
+  function withoutModule(symbols) {
+    return symbols.filter(function(symbol) {
+      return !/module\.exports$/.test(symbol.id);
+    });
+  }
+
   it('returns an array of exported symbols', function(done) {
     requestSymbols('module.exports.x = 1;', function(res) {
-      res.symbols.should.eql(
+      withoutModule(res.symbols).should.eql(
           [
             {
               id: 'a.js/x',
@@ -45,7 +51,7 @@ describe('Symbols', function() {
   describe('locals', function() {
     it('returns an array of local symbols', function(done) {
       requestSymbols('var x = 1;', function(res) {
-        res.symbols.should.eql(
+        withoutModule(res.symbols).should.eql(
           [
             {
               id: 'a.js/x:local:4',
@@ -63,7 +69,7 @@ describe('Symbols', function() {
     });
     it('emits func expr param symbols', function(done) {
       requestSymbols('(function(a){})', function(res) {
-        res.symbols.should.eql(
+        withoutModule(res.symbols).should.eql(
           [
             {
               id: 'a.js/a:local:10',
@@ -81,7 +87,7 @@ describe('Symbols', function() {
     });
     it('emits func decl param symbols', function(done) {
       requestSymbols('function f(a){}', function(res) {
-        res.symbols.should.includeEql(
+        withoutModule(res.symbols).should.includeEql(
           {
             id: 'a.js/a:local:11',
             kind: 'var',
@@ -97,7 +103,7 @@ describe('Symbols', function() {
     });
     it('emits innermost func as decl for func decl symbol', function(done) {
       requestSymbols('(function(){function f(){}})', function(res) {
-        res.symbols.should.eql(
+        withoutModule(res.symbols).should.eql(
           [{
             id: 'a.js/f:local:21',
             kind: 'func',

@@ -139,7 +139,7 @@ function isModuleExports(server, file, memberExpr) {
   var lhsObject = util.getType(server, file, memberExpr.object);
   // lhsObject should be "module." in "module.exports" ObjectExpression
   var lhsProp = util.getType(server, file, memberExpr.property);
-  return (lhsObject.type == 'Module' && lhsProp.exprName == 'exports');
+  return (lhsObject.name == 'Module' && lhsProp.exprName == 'exports');
 }
 
 function nodeIdent(node) {
