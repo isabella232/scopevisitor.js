@@ -93,7 +93,8 @@ function getDeclIdNode(file, start, end) {
   if (expr && expr.node) {
     return expr.node;
   }
-  console.error('No DeclIdNode at file ' + file.name + ':' + start + '-' + end);
+  // TODO(sqs): eliminate cases where this error occurs:
+  // console.error('No DeclIdNode at file ' + file.name + ':' + start + '-' + end);
 }
 
 var storedDefOrigins = ['ecma5', 'node', 'jquery', 'requirejs', 'browser'];
