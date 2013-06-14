@@ -14,7 +14,7 @@ exports.getDefinition = function(server, file, ident) {
 exports.getType = function(server, file, ident) {
   var res;
   server.request({
-    query: {type: 'type', file: file.name, start: ident.start, end: ident.end, depth: 5}
+    query: {type: 'type', file: file.name, start: ident.start, end: ident.end, depth: 2}
   }, function(err, tres) {
     if (err) throw err;
     res = tres;
