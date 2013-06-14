@@ -21,36 +21,41 @@ tern.defineQueryType('sourcegraph:symbols', {
     }, function(err, xres) {
       if (err) throw err;
       for (var i = 0; i < xres.exports.length; ++i) {
-        var x = xres.exports[i];
-        var nodes = getIdentAndDeclNodesForExport(server, file, x);
-        if (!nodes) return;
-        var symbol = {
-          id: file.name + '/' + (x.name || 'module.exports'),
-          kind: 'var',
-          name: x.name,
-          declId: nodes.idents[0]._id,
-          decl: nodes.decl._id,
-          exported: true,
-        };
+        try {
+          var x = xres.exports[i];
+          var nodes = getIdentAndDeclNodesForExport(server, file, x);
+          if (!nodes) return;
+          var symbol = {
+            id: file.name + '/' + (x.name || 'module.exports'),
+            kind: 'var',
+            name: x.name,
+            declId: nodes.idents[0]._id,
+            decl: nodes.decl._id,
+            exported: true,
+          };
 
-        // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
-        nodes.decl._isExportedDecl = true;
+          // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
+          nodes.decl._isExportedDecl = true;
 
-        // record what the idents declares, for later use in computing refs
-        nodes.idents.forEach(function(ident) {
-          ident._declSymbol = symbol.id;
-        });
-
-        updateSymbolWithType(symbol, util.getType(server, file, nodes.idents[0]).type);
-
-        if (x.doc) {
-          res.docs.push({
-            symbol: symbol.id,
-            body: x.doc,
+          // record what the idents declares, for later use in computing refs
+          nodes.idents.forEach(function(ident) {
+            ident._declSymbol = symbol.id;
           });
-        }
 
-        res.symbols.push(symbol);
+          updateSymbolWithType(symbol, util.getType(server, file, nodes.idents[0]).type);
+
+          var doc = util.getDoc(server, file, nodes.decl)
+          if (doc && doc.doc) {
+            res.docs.push({
+              symbol: symbol.id,
+              body: doc.doc,
+            });
+          }
+
+          res.symbols.push(symbol);
+        } catch (e) {
+          console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name);
+        }
       }
     });
 

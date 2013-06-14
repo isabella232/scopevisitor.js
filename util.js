@@ -21,3 +21,15 @@ exports.getType = function(server, file, ident) {
   });
   return res;
 };
+
+// getDoc gets the documentation for the identifier that appears in file.
+exports.getDoc = function(server, file, ident) {
+  var res;
+  server.request({
+    query: {type: 'documentation', file: file.name, start: ident.start, end: ident.end}
+  }, function(err, dres) {
+    // Don't throw on error; just return empty.
+    res = dres;
+  });
+  return res;
+};

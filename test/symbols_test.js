@@ -68,10 +68,9 @@ describe('Symbols', function() {
   });
   it('returns docs', function(done) {
     requestSymbols('// doc for x\nmodule.exports.x = function() {};\n\nvar z={\n  //doc for y\n  y: function(){}\n};\nmodule.exports.y=z.y;', function(res) {
-      should.deepEqual(res.docs, [
+      res.docs.should.eql([
         {symbol: 'a.js/x', body: 'doc for x'},
-        // TODO(sqs): emit the doc for y
-        // {symbol: 'a.js/y', body: 'doc for y'},
+        {symbol: 'a.js/y', body: 'doc for y'},
       ]);
       done();
     });
