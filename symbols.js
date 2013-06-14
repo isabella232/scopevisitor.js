@@ -109,7 +109,7 @@ tern.defineQueryType('sourcegraph:symbols', {
 // updateSymbolWithType sets symbol's obj and kind based on the type.
 function updateSymbolWithType(symbol, type) {
   if (type) {
-    symbol.obj = {typeExpr: type.toString(5)};
+    symbol.obj = {typeExpr: type};
     symbol.kind = symbol.obj.typeExpr.indexOf('fn(') == -1 ? 'var' : 'func';
   }
 }
