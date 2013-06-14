@@ -1,4 +1,4 @@
-var assert = require('assert');
+var should = require('should');
 
 var server = require('../tern_server').startTernServer('.', {ast: true});
 
@@ -19,16 +19,15 @@ describe('AST', function() {
         {name: 'a.js', type: 'full', text: 'var foo = 3;'},
       ],
     }, function(err, res) {
-      assert.ifError(err);
-      assert.deepEqual(
-        res.map(nodeInfo),
-          [
-            {_id: '/Program', type: 'Program', start: 0, end: 12},
-            {_id: '/Program/body/0/VariableDeclaration', type: 'VariableDeclaration', start: 0, end: 11},
-            {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo', type: 'VariableDeclarator', start: 4, end: 11},
-            {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo/id', type: 'Identifier', start: 4, end: 7},
-            {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo/init', type: 'Literal', start: 10, end: 11},
-          ]
+      should.ifError(err);
+      res.map(nodeInfo).should.eql(
+        [
+          {_id: '/Program', type: 'Program', start: 0, end: 12},
+          {_id: '/Program/body/0/VariableDeclaration', type: 'VariableDeclaration', start: 0, end: 11},
+          {_id: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:foo', type: 'VariableDeclarator', start: 4, end: 11},
+          {_id: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:foo/init/Literal', type: 'Literal', start: 10, end: 11},
+          {_id: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:foo/id/Identifier', type: 'Identifier', start: 4, end: 7},
+        ]
       );
     });
     done();

@@ -22,12 +22,12 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee',
+            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: '@node/require'
           },
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property',
+            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/b.js/x'
           }
@@ -41,27 +41,27 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/id',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/id/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/b.js/module.exports'
           },
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/init/CallExpression/callee',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/init/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: '@node/require'
           },
           {
-            astNode: '/Program/body/1/ExpressionStatement/expression',
+            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/b.js/module.exports'
           },
           {
-            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object',
+            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/b.js/module.exports'
           },
           {
-            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property',
+            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/b.js/x'
           }
@@ -75,32 +75,32 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:c/id',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/id/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/c.js/module.exports'
           },
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:c/init/CallExpression/callee',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: '@node/require'
           },
           {
-            astNode: '/Program/body/1/ExpressionStatement/expression',
+            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/c.js/module.exports'
           },
           {
-            astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee',
+            astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/c.js/module.exports'
           },
           {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object',
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/c.js/module.exports'
           },
           {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property',
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'test/testdata/c.js/d'
           }
@@ -114,12 +114,12 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee',
+            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: '@node/require'
           },
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property',
+            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: '@node/fs.readFile'
           }
@@ -133,12 +133,12 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:m/id',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/id/Identifier',
             kind: 'ident',
             symbol: '@node/fs'
           },
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:m/init/CallExpression/callee',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/init/CallExpression/callee/Identifier',
             kind: 'ident',
             symbol: '@node/require'
           }
@@ -152,17 +152,17 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property',
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'a.js/x'
           },
           {
-            astNode: '/Program/body/1/VariableDeclaration/declarations/0:y/id',
+            astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/id/Identifier',
             kind: 'ident',
             symbol: 'a.js/y:local:34'
           },
           {
-            astNode: '/Program/body/1/VariableDeclaration/declarations/0:y/init/MemberExpression/property',
+            astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/init/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'a.js/x'
           }
@@ -176,17 +176,17 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property',
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
             symbol: 'a.js/module.exports'
           },
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right',
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',
             symbol: 'a.js/module.exports'
           },
           {
-            astNode: '/Program/body/1/FunctionDeclaration:x/id',
+            astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
             kind: 'ident',
             symbol: 'a.js/module.exports'
           }
@@ -201,7 +201,7 @@ describe('Refs', function() {
         res.refs,
         [
           {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
+            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
             kind: 'ident',
             symbol: 'a.js/x:local:4'
           },

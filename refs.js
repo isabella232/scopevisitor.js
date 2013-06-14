@@ -1,5 +1,5 @@
 var util = require('./util');
-var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
+var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
 // refs takes a `file` parameter and returns an array of SourceGraph refs originating from AST nodes
 // in the file.
@@ -89,7 +89,7 @@ function getDeclIdNode(file, start, end) {
   var test = function(_t, node) {
     return !!node._declSymbol;
   };
-  var expr = walk.findNodeAt(file.ast, null, end, test, idast.base);
+  var expr = walk.findNodeAt(file.ast, null, end, test, walkall.traversers);
   if (expr && expr.node) {
     return expr.node;
   }

@@ -1,5 +1,5 @@
 var util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
+var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
 exports.debug = false;
 
@@ -150,7 +150,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
     // we've encountered something like "module.exports = f; function f() {}", where we are
     // reassigning module.exports to an expression whose def is not on the RHS of the "module.exports="
     // AssignmentExpression.
-    var node = getDeclarationAround(file, x.end);
+    var node = getNamedDeclarationAround(file, x.end);
     exportDeclNode = findModuleExportsReassignmentTo(server, file, nodeIdent(node));
     assert(exportDeclNode, 'No AssignmentExpression node found containing module.exports reassignment in ' + file.name + ' for ' + JSON.stringify(x));
   }
@@ -176,8 +176,13 @@ function getAssignmentAround(file, pos) {
   return assign && assign.node;
 }
 
+function getNamedDeclarationAround(file, pos) {
+  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'ObjectExpression']), walkall.traversers);
+  return decl && decl.node;
+}
+
 function getDeclarationAround(file, pos) {
-  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'FunctionExpression', 'ObjectExpression']), require('idast').base);
+  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'FunctionExpression', 'ObjectExpression']), walkall.traversers);
   return decl && decl.node;
 }
 
