@@ -26,6 +26,7 @@ tern.defineQueryType('sourcegraph:refs', {
         // tern doesn't set the type.origin of m to "foo" in all cases, so we have to manually
         // resolve the ident to the module
         var mod = type.origin || getModuleRef(server, file, def.start, def.end);
+        if (!mod) return;
         ref.symbol = mod + '/module.exports';
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         // internal (same file) ref
@@ -35,6 +36,7 @@ tern.defineQueryType('sourcegraph:refs', {
           ref.symbol = def.origin + '/module.exports';
         } else {
           var declId = getDeclIdNode(file, def.start, def.end);
+          if (!declId) return;
           ref.symbol = declId._declSymbol;
         }
       } else {
@@ -61,7 +63,12 @@ function getModuleRef(server, file, start, end) {
   var decl = infer.findExpressionAt(file.ast, start, end, file.scope);
   // iterate over module props. this will fail if the module re-exports a def from another origin
   // and we happen to iterate over it first here.
-  var moduleProps = infer.expressionType(decl).types[0].props;
+  var moduleType = infer.expressionType(decl).types[0];
+  if (!moduleType) {
+    console.error('Module has no type at file ' + file.name + ':' + start + '-' + end);
+    return;
+  }
+  var moduleProps = moduleType.props;
   // no hasOwnProperty check needed because moduleProps has a stripped object prototype (from tern)??
   for (var key in moduleProps) {
     if (moduleProps[key].origin) return moduleProps[key].origin;

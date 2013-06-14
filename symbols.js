@@ -22,6 +22,7 @@ tern.defineQueryType('sourcegraph:symbols', {
       if (err) throw err;
       res.symbols.push.apply(res.symbols, xres.exports.map(function(x) {
         var nodes = getIdentAndDeclNodesForExport(server, file, x);
+        if (!nodes) return;
         var symbol = {
           id: file.name + '/' + (x.name || 'module.exports'),
           kind: 'var',
@@ -153,7 +154,10 @@ function getIdentAndDeclNodesForExport(server, file, x) {
 
 function getDeclNodeForLocal(server, file, node, type, def) {
   var declNode = getDeclarationAround(file, node.end);
-  if (declNode) return getIdentAndDeclNodes(server, file, declNode, node.name, true).decl;
+  if (!declNode) return;
+  var nodes = getIdentAndDeclNodes(server, file, declNode, node.name, true);
+  if (nodes) return nodes.decl;
+  else console.error('Failed to get decl node for local symbol at ' + file.name + ':' + node.start + '-' + node.end);
 }
 
 function getAssignmentAround(file, pos) {
@@ -171,7 +175,12 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
     // CASE: 'module.exports = {a: b}'
     // set the ident to the key and decl to the value
     var prop = findPropInObjectExpressionByName(node, name);
-    return {idents: [prop.key], decl: prop.value};
+    if (prop) {
+      return {idents: [prop.key], decl: prop.value};
+    } else {
+      console.error('No property found with name "' + name + '" in ObjectExpression at ' + file.name + ':' + node.start + '-' + node.end);
+      return;
+    }
   } else if (node.type == 'AssignmentExpression') {
     var r = {};
     if (node.left.type == 'MemberExpression') r.idents = [node.left.property];
