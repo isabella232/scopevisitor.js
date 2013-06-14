@@ -60,7 +60,14 @@ tern.defineQueryType('sourcegraph:refs', {
 // getModuleRef takes a start+end containing an ident whose value is an node.js module's exports
 // (e.g., "var m = require('foo')"), and returns the module's filename.
 function getModuleRef(server, file, start, end) {
-  var decl = infer.findExpressionAt(file.ast, start, end, file.scope);
+  try {
+    var decl = infer.findExpressionAt(file.ast, start, end, file.scope);
+  } catch(e) {}
+
+  if (!decl) {
+    console.error('Failed to get decl of module ref at ' + file.name + ':' + start + '-' + end);
+    return;
+  }
   // iterate over module props. this will fail if the module re-exports a def from another origin
   // and we happen to iterate over it first here.
   var moduleType = infer.expressionType(decl).types[0];
