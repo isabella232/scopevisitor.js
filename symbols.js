@@ -110,7 +110,7 @@ tern.defineQueryType('sourcegraph:symbols', {
 function updateSymbolWithType(symbol, type) {
   if (type) {
     symbol.obj = {typeExpr: type};
-    symbol.kind = symbol.obj.typeExpr.indexOf('fn(') == -1 ? 'var' : 'func';
+    symbol.kind = symbol.obj.typeExpr.indexOf('fn(') == 0 ? 'func' : 'var';
   }
 }
 
