@@ -20,7 +20,8 @@ tern.defineQueryType('sourcegraph:symbols', {
       query: {type: 'node_exports', file: file.name},
     }, function(err, xres) {
       if (err) throw err;
-      res.symbols.push.apply(res.symbols, xres.exports.map(function(x) {
+      for (var i = 0; i < xres.exports.length; ++i) {
+        var x = xres.exports[i];
         var nodes = getIdentAndDeclNodesForExport(server, file, x);
         if (!nodes) return;
         var symbol = {
@@ -49,8 +50,8 @@ tern.defineQueryType('sourcegraph:symbols', {
           });
         }
 
-        return symbol;
-      }));
+        res.symbols.push(symbol);
+      }
     });
 
     idents.inspect(file.ast, function(ident) {
@@ -147,6 +148,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
   assert(exportDeclNode, 'No export decl node found');
 
   var r = getIdentAndDeclNodes(server, file, exportDeclNode, x.name);
+  if (r.skip) return;
   assert(r.idents.length > 0, 'No ident found in ' + file.name + ' for ' + JSON.stringify(x));
   assert(r.decl, 'No decl found in ' + file.name + ' for ' + JSON.stringify(x));
   return r;
@@ -195,6 +197,10 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
     } else if (node.right.type == 'MemberExpression' || node.right.type == 'Identifier') {
       var def = util.getDefinition(server, file, node.right);
       assert(def);
+      if (!def.start && !def.end) {
+        // External def, so we don't need to emit it as a symbol of this module file.
+        return {skip: true};
+      }
       var declNode = walk.findNodeAround(file.ast, def.end, nodeType(['FunctionDeclaration', 'ObjectExpression']));
       declNode = declNode && declNode.node;
       if (!declNode) {
@@ -207,7 +213,7 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
         declNode = findPropInObjectExpressionByKeyPos(declNode, def.start, def.end).value;
       }
       r.decl = declNode;
-      if (declNode.id) r.idents.push(declNode.id);
+      if (declNode && declNode.id) r.idents.push(declNode.id);
     } else {
       // CASE: 'module.exports.X = Y', where Y.type not in ['AssignmentExpression', 'MemberExpression', 'Identifier']
       r.decl = node;
