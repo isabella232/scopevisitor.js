@@ -26,7 +26,10 @@ tern.defineQueryType('sourcegraph:refs', {
         // tern doesn't set the type.origin of m to "foo" in all cases, so we have to manually
         // resolve the ident to the module
         var mod = type.origin || getModuleRef(server, file, def.start, def.end);
-        if (!mod) return;
+        if (!mod) {
+          console.error('Failed to resolve module ref at file', file.name + ':' + ident.start + '-' + ident.end, 'at identifier type', type, 'definition', def);
+          return;
+        }
         ref.symbol = mod + '/module.exports';
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         // internal (same file) ref
@@ -80,7 +83,6 @@ function getModuleRef(server, file, start, end) {
   for (var key in moduleProps) {
     if (moduleProps[key].origin) return moduleProps[key].origin;
   }
-  throw new Error('Failed to resolve module ref at file ' + file.name + ':' + start + '-' + end);
 }
 
 // getDeclIdNode searches the AST for the declaration node at the given start and end character
