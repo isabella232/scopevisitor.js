@@ -7,7 +7,6 @@ tern.defineQueryType('ast', {
   run: function(server, query, file) {
     var nodes = [];
     idast.assignIds(file.ast);
-    // TODO(sqs): emit args for CallExpression nodes
     walk.simple(file.ast, {
       Node: function(node) {
         nodes.push(node);
