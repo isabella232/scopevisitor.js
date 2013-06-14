@@ -40,22 +40,24 @@ describe('Symbols', function() {
       done();
     });
   });
-  it('returns an array of local symbols', function(done) {
-    requestSymbols('var x = 1;', function(res) {
-      res.symbols.should.eql(
-        [
-          {
-            id: 'a.js/x:local:4',
-            kind: 'var',
-            name: 'x',
-            declId: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
-            decl: '/Program/body/0/VariableDeclaration/declarations/0:x',
-            exported: false,
-            obj: {typeExpr: 'number'}
-          }
-        ]
-      );
-      done();
+  describe('locals', function() {
+    it('returns an array of local symbols', function(done) {
+      requestSymbols('var x = 1;', function(res) {
+        res.symbols.should.eql(
+          [
+            {
+              id: 'a.js/x:local:4',
+              kind: 'var',
+              name: 'x',
+              declId: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
+              decl: '/Program/body/0/VariableDeclaration/declarations/0:x',
+              exported: false,
+              obj: {typeExpr: 'number'}
+            }
+          ]
+        );
+        done();
+      });
     });
   });
   it('annotates the types of functions', function(done) {
