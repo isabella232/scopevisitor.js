@@ -44,7 +44,7 @@ tern.defineQueryType('sourcegraph:symbols', {
 
           updateSymbolWithType(symbol, util.getType(server, file, nodes.idents[0]).type);
 
-          var doc = util.getDoc(server, file, nodes.decl)
+          var doc = util.getDoc(server, file, nodes.decl) || util.getDoc(server, file, nodes.idents[0]);
           if (doc && doc.doc) {
             res.docs.push({
               symbol: symbol.id,
