@@ -162,7 +162,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
 function getDeclNodeForLocal(server, file, node, type, def) {
   var declNode = getDeclarationAround(file, node.end);
   if (!declNode) return;
-  var nodes = getIdentAndDeclNodes(server, file, declNode, node.name, true);
+  var nodes = getIdentAndDeclNodes(server, file, declNode, node.name, true, node);
   if (nodes) return nodes.decl;
   else console.error('Failed to get decl node for local symbol at ' + file.name + ':' + node.start + '-' + node.end);
 }
@@ -173,11 +173,11 @@ function getAssignmentAround(file, pos) {
 }
 
 function getDeclarationAround(file, pos) {
-  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'ObjectExpression']), require('idast').base);
+  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'FunctionExpression', 'ObjectExpression']), require('idast').base);
   return decl && decl.node;
 }
 
-function getIdentAndDeclNodes(server, file, node, name, localOk) {
+function getIdentAndDeclNodes(server, file, node, name, localOk, origNode) {
   if (node.type == 'ObjectExpression') {
     // CASE: 'module.exports = {a: b}'
     // set the ident to the key and decl to the value
@@ -225,8 +225,11 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
     }
     return r;
   } else if (localOk) {
-    if (node.type == 'FunctionDeclaration') {
-      return {ident: node.id, decl: node};
+    if (node.type == 'FunctionDeclaration' || node.type == 'FunctionExpression') {
+      if (node.params.indexOf(origNode) != -1) {
+        // origNode is a param of the func
+        return {ident: origNode, decl: node};
+      } else return {ident: node.id, decl: node};
     } else if (node.type == 'VariableDeclarator') {
       return {ident: node.id, decl: node};
     } else throw new Error('Unhandled node type (local decl): ' + node.type + ' (in file:' + file.name + ')');

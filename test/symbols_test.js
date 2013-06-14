@@ -59,6 +59,40 @@ describe('Symbols', function() {
         done();
       });
     });
+    it('emits func expr param symbols', function(done) {
+      requestSymbols('(function(a){})', function(res) {
+        res.symbols.should.eql(
+          [
+            {
+              id: 'a.js/a:local:10',
+              kind: 'var',
+              name: 'a',
+              declId: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/params/0',
+              decl: '/Program/body/0/ExpressionStatement/expression/FunctionExpression',
+              exported: false,
+              obj: {typeExpr: '?'}
+            }
+          ]
+        );
+        done();
+      });
+    });
+    it('emits func decl param symbols', function(done) {
+      requestSymbols('function f(a){}', function(res) {
+        res.symbols.should.includeEql(
+          {
+            id: 'a.js/a:local:11',
+            kind: 'var',
+            name: 'a',
+            declId: '/Program/body/0/FunctionDeclaration:f/params/0',
+            decl: '/Program/body/0/FunctionDeclaration:f',
+            exported: false,
+            obj: {typeExpr: '?'}
+          }
+        );
+        done();
+      });
+    });
   });
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
