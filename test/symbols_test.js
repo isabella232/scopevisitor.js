@@ -140,4 +140,12 @@ describe('Symbols', function() {
       done();
     });
   });
+  it('sets the decl to the rightmost value in a chained assignment (with indirect)', function(done) {
+    requestSymbols('module.exports.x = module.exports.y = f; function f() {};', function(res) {
+      var x = getSymbolNamed(res.symbols, 'x');
+      should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(x.decl, '/Program/body/1/FunctionDeclaration:f');
+      done();
+    });
+  });
 });

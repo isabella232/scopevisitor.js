@@ -181,7 +181,8 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
       // CASE: 'module.exports.x = foo = bar = qux;'
       // Set the decl to "qux", not "foo = bar = qux".
       var rr = getIdentAndDeclNodes(server, file, node.right);
-      r.decl = rr.decl.right;
+      if (rr.decl.type == 'AssignmentExpression') r.decl = rr.decl.right;
+      else r.decl = rr.decl;
     } else if (node.right.type == 'MemberExpression' || node.right.type == 'Identifier') {
       var def = util.getDefinition(server, file, node.right);
       assert(def);
