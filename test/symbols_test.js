@@ -2,6 +2,8 @@ var should = require('should');
 
 var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, symbols: true});
 
+require('../symbols').debug = true;
+
 describe('Symbols', function() {
   function requestSymbols(src, test) {
     server.request({

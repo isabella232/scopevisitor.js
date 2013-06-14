@@ -1,6 +1,8 @@
 var util = require('./util');
 var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk');
 
+exports.debug = false;
+
 // sourcegraph:symbols takes a `file` parameter and returns an array of SourceGraph symbols defined
 // in the file.
 tern.defineQueryType('sourcegraph:symbols', {
@@ -21,8 +23,8 @@ tern.defineQueryType('sourcegraph:symbols', {
     }, function(err, xres) {
       if (err) throw err;
       for (var i = 0; i < xres.exports.length; ++i) {
-        try {
-          var x = xres.exports[i];
+        var x = xres.exports[i];
+        function work() {
           var nodes = getIdentAndDeclNodesForExport(server, file, x);
           if (!nodes) return;
           var symbol = {
@@ -53,8 +55,10 @@ tern.defineQueryType('sourcegraph:symbols', {
           }
 
           res.symbols.push(symbol);
-        } catch (e) {
-          console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name);
+        }
+        if (exports.debug) work();
+        else try { work() } catch (e) {
+          console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name + ':', e);
         }
       }
     });
