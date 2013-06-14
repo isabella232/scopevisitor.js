@@ -93,6 +93,22 @@ describe('Symbols', function() {
         done();
       });
     });
+    it('emits innermost func as decl for func decl symbol', function(done) {
+      requestSymbols('(function(){function f(){}})', function(res) {
+        res.symbols.should.eql(
+          [{
+            id: 'a.js/f:local:21',
+            kind: 'func',
+            name: 'f',
+            declId: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/body/BlockStatement/body/0/FunctionDeclaration:f/id',
+            decl: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/body/BlockStatement/body/0/FunctionDeclaration:f',
+            exported: false,
+            obj: { typeExpr: 'fn()' }
+          }]
+        );
+        done();
+      });
+    });
   });
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
