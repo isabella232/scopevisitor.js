@@ -148,7 +148,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
   assert(exportDeclNode, 'No export decl node found');
 
   var r = getIdentAndDeclNodes(server, file, exportDeclNode, x.name);
-  if (r.skip) return;
+  if (r && r.skip) return;
   assert(r.idents.length > 0, 'No ident found in ' + file.name + ' for ' + JSON.stringify(x));
   assert(r.decl, 'No decl found in ' + file.name + ' for ' + JSON.stringify(x));
   return r;
@@ -181,7 +181,7 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
       return {idents: [prop.key], decl: prop.value};
     } else {
       console.error('No property found with name "' + name + '" in ObjectExpression at ' + file.name + ':' + node.start + '-' + node.end);
-      return;
+      return {skip: true};
     }
   } else if (node.type == 'AssignmentExpression') {
     var r = {};
