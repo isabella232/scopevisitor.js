@@ -32,6 +32,11 @@ tern.defineQueryType('sourcegraph:ast', {
           type: node.type,
           start: node.start,
           end: node.end,
+          obj: node.type == 'CallExpression' ? {
+            args: node.arguments.map(function(arg) {
+              return arg._id;
+            })
+          } : undefined,
         });
       }
     });
