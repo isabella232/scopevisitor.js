@@ -43,7 +43,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/id',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js/module.exports'
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0:b/init/CallExpression/callee',
@@ -53,12 +53,12 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/1/ExpressionStatement/expression',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js/module.exports'
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js/module.exports'
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property',
