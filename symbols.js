@@ -24,7 +24,7 @@ tern.defineQueryType('sourcegraph:symbols', {
       if (err) throw err;
       for (var i = 0; i < xres.exports.length; ++i) {
         var x = xres.exports[i];
-        function work() {
+        function work(x) {
           var nodes = getIdentAndDeclNodesForExport(server, file, x);
           if (!nodes) return;
           var symbol = {
@@ -56,8 +56,8 @@ tern.defineQueryType('sourcegraph:symbols', {
 
           res.symbols.push(symbol);
         }
-        if (exports.debug) work();
-        else try { work() } catch (e) {
+        if (exports.debug) work(x);
+        else try { work(x) } catch (e) {
           console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name + ':', e);
         }
       }
