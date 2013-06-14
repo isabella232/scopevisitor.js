@@ -100,11 +100,27 @@ describe('Symbols', function() {
       done();
     });
   });
-  it('sets the decl to the exported function expr', function(done) {
+  it('sets the decl to the exported function stmt', function(done) {
     requestSymbols('module.exports.F=f;function f(){}', function(res) {
       var f = getSymbolNamed(res.symbols, 'F');
       should.equal(f.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
       should.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
+      done();
+    });
+  });
+  it('sets the decl to the exported function expr', function(done) {
+    requestSymbols('var f = function(){};module.exports.F=f', function(res) {
+      var f = getSymbolNamed(res.symbols, 'F');
+      should.equal(f.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(f.decl, '/Program/body/0/VariableDeclaration/declarations/0:f');
+      done();
+    });
+  });
+  it('sets the decl to the exported function expr (reassign)', function(done) {
+    requestSymbols('var f = function(){};module.exports=f', function(res) {
+      var f = getSymbolNamed(res.symbols, null);
+      should.equal(f.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(f.decl, '/Program/body/0/VariableDeclaration/declarations/0:f');
       done();
     });
   });

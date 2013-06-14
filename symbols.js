@@ -139,7 +139,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
     // we've encountered something like "module.exports = f; function f() {}", where we are
     // reassigning module.exports to an expression whose def is not on the RHS of the "module.exports="
     // AssignmentExpression.
-    var node = walk.findNodeAt(file.ast, x.start, x.end, null, idast.base).node;
+    var node = getDeclarationAround(file, x.end);
     exportDeclNode = findModuleExportsReassignmentTo(server, file, nodeIdent(node));
     assert(exportDeclNode, 'No AssignmentExpression node found containing module.exports reassignment in ' + file.name + ' for ' + JSON.stringify(x));
   }
@@ -185,7 +185,12 @@ function getIdentAndDeclNodes(server, file, node, name, localOk) {
     } else if (node.right.type == 'MemberExpression' || node.right.type == 'Identifier') {
       var def = util.getDefinition(server, file, node.right);
       assert(def);
-      var declNode = walk.findNodeAround(file.ast, def.end, nodeType(['FunctionDeclaration', 'ObjectExpression'])).node;
+      var declNode = walk.findNodeAround(file.ast, def.end, nodeType(['FunctionDeclaration', 'ObjectExpression']));
+      declNode = declNode && declNode.node;
+      if (!declNode) {
+        declNode = getDeclarationAround(file, def.end);
+      }
+      assert(declNode, 'No decl node found for symbol on RHS of AssignmentExpression at ' + file.name + '@' + def.end);
       if (declNode.type == 'ObjectExpression') {
         // CASE: 'var y={z:7}; module.exports.x=y.z;'
         // Set the decl to '7'
