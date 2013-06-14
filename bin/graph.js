@@ -8,6 +8,7 @@ if (!file) {
 }
 
 var fs = require('fs'), path = require('path');
+file = path.resolve(file);
 var dir = path.dirname(file);
 var t0 = Date.now();
 var fsize = fs.statSync(file).size;
