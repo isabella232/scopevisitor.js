@@ -13,11 +13,12 @@
   },
   "dependencies": {
     "javascript-idents": "0.0.1",
-    "idast": "0.0.2",
+    "idast": "0.0.3",
     "tern": "git://github.com/sqs/tern.git#node_exports-query",
     "acorn": "0.3.1"
   },
   "devDependencies": {
-    "mocha": "1.10.0"
+    "mocha": "1.10.0",
+    "should": "~1.2.2"
   }
 }

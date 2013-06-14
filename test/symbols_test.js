@@ -1,4 +1,4 @@
-var assert = require('assert');
+var should = require('should');
 
 var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, symbols: true});
 
@@ -10,7 +10,7 @@ describe('Symbols', function() {
         {name: 'a.js', type: 'full', text: src},
       ],
     }, function(err, res) {
-      assert.ifError(err);
+      should.ifError(err);
       test(res);
     });
   }
@@ -24,15 +24,14 @@ describe('Symbols', function() {
 
   it('returns an array of exported symbols', function(done) {
     requestSymbols('module.exports.x = 1;', function(res) {
-      assert.deepEqual(
-        res.symbols,
+      res.symbols.should.eql(
           [
             {
               id: 'a.js/x',
               kind: 'var',
               name: 'x',
               declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property',
-              decl: '/Program/body/0/ExpressionStatement',
+              decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression',
               exported: true,
               obj: {typeExpr: 'number'},
             },
@@ -43,15 +42,14 @@ describe('Symbols', function() {
   });
   it('returns an array of local symbols', function(done) {
     requestSymbols('var x = 1;', function(res) {
-      assert.deepEqual(
-        res.symbols,
+      res.symbols.should.eql(
         [
           {
             id: 'a.js/x:local:4',
             kind: 'var',
             name: 'x',
             declId: '/Program/body/0/VariableDeclaration/declarations/0:x/id',
-            decl: '/Program/body/0/VariableDeclaration',
+            decl: '/Program/body/0/VariableDeclaration/declarations/0:x',
             exported: false,
             obj: {typeExpr: 'number'}
           }
@@ -63,14 +61,14 @@ describe('Symbols', function() {
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
       var x = getSymbolNamed(res.symbols, 'x');
-      assert.equal(x.obj.typeExpr, 'fn(a: string, b: number) -> [string]');
-      assert.equal(x.kind, 'func');
+      should.equal(x.obj.typeExpr, 'fn(a: string, b: number) -> [string]');
+      should.equal(x.kind, 'func');
       done();
     });
   });
   it('returns docs', function(done) {
     requestSymbols('// doc for x\nmodule.exports.x = function() {};\n\nvar z={\n  //doc for y\n  y: function(){}\n};\nmodule.exports.y=z.y;', function(res) {
-      assert.deepEqual(res.docs, [
+      should.deepEqual(res.docs, [
         {symbol: 'a.js/x', body: 'doc for x'},
         // TODO(sqs): emit the doc for y
         // {symbol: 'a.js/y', body: 'doc for y'},
@@ -78,35 +76,51 @@ describe('Symbols', function() {
       done();
     });
   });
-  it('sets the declId and decl to the key/value in an object literal', function(done) {
-    requestSymbols('module.exports = {w: 1, x: function(){}, z: 7};', function(res) {
+  it('sets the declId and decl to the key/value in an object literal (indirect)', function(done) {
+    requestSymbols('var y={z:7};module.exports.x = y.z;', function(res) {
       var x = getSymbolNamed(res.symbols, 'x');
-      assert.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/key');
-      assert.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/value/FunctionExpression');
+      should.equal(x.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(x.decl, '/Program/body/0/VariableDeclaration/declarations/0:y/init/ObjectExpression/properties/0/value');
       done();
     });
   });
-  it('sets the declId and decl to the name/decl in a func statement', function(done) {
+  it('sets the declId and decl to the key/value in an object literal', function(done) {
+    requestSymbols('module.exports = {w: 1, x: function(){}, z: 7};', function(res) {
+      var x = getSymbolNamed(res.symbols, 'x');
+      should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/key');
+      should.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/ObjectExpression/properties/1/value/FunctionExpression');
+      done();
+    });
+  });
+  it('sets the decl to the def of the RHS', function(done) {
     requestSymbols('module.exports=f;function f(){}', function(res) {
       var f = getSymbolNamed(res.symbols, null);
-      assert.equal(f.declId, '/Program/body/1/FunctionDeclaration:f/id');
-      assert.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
+      should.equal(f.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
+      done();
+    });
+  });
+  it('sets the decl to the exported function expr', function(done) {
+    requestSymbols('module.exports.F=f;function f(){}', function(res) {
+      var f = getSymbolNamed(res.symbols, 'F');
+      should.equal(f.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
       done();
     });
   });
   it('sets the decl to the whole function expr', function(done) {
     requestSymbols('module.exports = function() {};', function(res) {
       var m = getSymbolNamed(res.symbols, null);
-      assert.equal(m.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression');
-      assert.equal(m.decl, '/Program/body/0/ExpressionStatement');
+      should.equal(m.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(m.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression');
       done();
     });
   });
-  if (0) it('sets the decl to the rightmost value in a chained assignment', function(done) {
+  it('sets the decl to the rightmost value in a chained assignment', function(done) {
     requestSymbols('module.exports.x = module.exports.y = function() {};', function(res) {
       var x = getSymbolNamed(res.symbols, 'x');
-      assert.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression');
-      assert.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/AssignmentExpression/right/FunctionExpression');
+      should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property');
+      should.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/AssignmentExpression/right/FunctionExpression');
       done();
     });
   });

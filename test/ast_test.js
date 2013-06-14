@@ -25,6 +25,7 @@ describe('AST', function() {
           [
             {_id: '/Program', type: 'Program', start: 0, end: 12},
             {_id: '/Program/body/0/VariableDeclaration', type: 'VariableDeclaration', start: 0, end: 11},
+            {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo', type: 'VariableDeclarator', start: 4, end: 11},
             {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo/id', type: 'Identifier', start: 4, end: 7},
             {_id: '/Program/body/0/VariableDeclaration/declarations/0:foo/init', type: 'Literal', start: 10, end: 11},
           ]

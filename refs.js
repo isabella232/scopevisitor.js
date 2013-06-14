@@ -18,6 +18,7 @@ tern.defineQueryType('sourcegraph:refs', {
         // console.error('No def found for ident "' + ident.name + '" at file ' + file.name + ':' + ident.start + '-' + ident.end);
         return;
       }
+
       var ref = {astNode: ident._id, kind: 'ident'};
       if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         // internal (same file) ref
