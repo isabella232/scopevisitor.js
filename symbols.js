@@ -61,7 +61,7 @@ tern.defineQueryType('sourcegraph:symbols', {
         }
         if (exports.debug) work(x);
         else try { work(x) } catch (e) {
-          console.error('Error processing export ' + JSON.stringify(x) + ' in file ' + file.name + ':', e);
+          console.error('Error processing export ' + x.name + ' in file ' + file.name + ':', e);
         }
       }
 
@@ -182,7 +182,7 @@ function getDeclNodeForLocal(server, file, node, type, def) {
   if (!declNode) return;
   var nodes = getIdentAndDeclNodes(server, file, declNode, node.name, true, node);
   if (nodes) return nodes.decl;
-  else console.error('Failed to get decl node for local symbol at ' + file.name + ':' + node.start + '-' + node.end);
+  else if (exports.debug) console.error('Failed to get decl node for local symbol at ' + file.name + ':' + node.start + '-' + node.end);
 }
 
 function getAssignmentAround(file, pos) {
@@ -208,7 +208,7 @@ function getIdentAndDeclNodes(server, file, node, name, localOk, origNode) {
     if (prop) {
       return {idents: [prop.key], decl: prop.value};
     } else {
-      console.error('No property found with name "' + name + '" in ObjectExpression at ' + file.name + ':' + node.start + '-' + node.end);
+      if (exports.debug) console.error('No property found with name "' + name + '" in ObjectExpression at ' + file.name + ':' + node.start + '-' + node.end);
       return {skip: true};
     }
   } else if (node.type == 'AssignmentExpression') {

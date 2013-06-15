@@ -1,6 +1,8 @@
 var util = require('./util');
 var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
+exports.debug = false;
+
 // refs takes a `file` parameter and returns an array of SourceGraph refs originating from AST nodes
 // in the file.
 tern.defineQueryType('sourcegraph:refs', {
@@ -27,7 +29,7 @@ tern.defineQueryType('sourcegraph:refs', {
         // resolve the ident to the module
         var mod = type.origin || getModuleRef(server, file, def.start, def.end);
         if (!mod) {
-          console.error('Failed to resolve module ref at file', file.name + ':' + ident.start + '-' + ident.end, 'at identifier type', type, 'definition', def);
+          if (exports.debug) console.error('Failed to resolve module ref at file', file.name + ':' + ident.start + '-' + ident.end, 'at identifier type', type, 'definition', def);
           return;
         }
         ref.symbol = mod + '/module.exports';
@@ -68,14 +70,14 @@ function getModuleRef(server, file, start, end) {
   } catch(e) {}
 
   if (!decl) {
-    console.error('Failed to get decl of module ref at ' + file.name + ':' + start + '-' + end);
+    if (exports.debug) console.error('Failed to get decl of module ref at ' + file.name + ':' + start + '-' + end);
     return;
   }
   // iterate over module props. this will fail if the module re-exports a def from another origin
   // and we happen to iterate over it first here.
   var moduleType = infer.expressionType(decl).types[0];
   if (!moduleType) {
-    console.error('Module has no type at file ' + file.name + ':' + start + '-' + end);
+    if (exports.debug) console.error('Module has no type at file ' + file.name + ':' + start + '-' + end);
     return;
   }
   var moduleProps = moduleType.props;
