@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+var debug = process.stdout.isTTY;
+
 var file = process.argv[2];
 if (!file) {
   console.error('error: no file specified\n');
@@ -13,7 +15,7 @@ var dir = path.dirname(file);
 var t0 = Date.now();
 var fsize = fs.statSync(file).size;
 var count = {astNodes: 0, docs: 0, symbols: 0, refs: 0};
-console.error('Starting to graph', file, '(' + (fsize/1024).toFixed(1) + ' kb)');
+if (debug) console.error('Starting to graph', file, '(' + (fsize/1024).toFixed(1) + ' kb)');
 
 var server = require('../tern_server').startTernServer(dir, {ast: true, doc_comment: true, node: true, refs: true, symbols: true});
 
@@ -65,4 +67,4 @@ server.request({query: {type: 'sourcegraph:refs', file: file}}, function(err, re
 
 process.stdout.write('}\n');
 var msec = (Date.now() - t0);
-console.error('Finished graphing file', file, ': took', msec, 'msec, emitted', count);
+if (debug) console.error('Finished graphing file', file, ': took', msec, 'msec, emitted', count);
