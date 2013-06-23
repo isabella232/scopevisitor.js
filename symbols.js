@@ -98,6 +98,14 @@ tern.defineQueryType('sourcegraph:symbols', {
       res.symbols.push(symbol);
       // record what this ident declares, for later use in computing refs
       ident._declSymbol = symbol.id;
+
+      var doc = util.getDoc(server, file, declNode) || util.getDoc(server, file, ident);
+      if (doc && doc.doc) {
+        res.docs.push({
+          symbol: symbol.id,
+          body: doc.doc,
+        });
+      }
     });
 
     file.ast._sourcegraph_annotatedSymbolDeclIds = true;
