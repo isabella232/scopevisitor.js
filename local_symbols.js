@@ -9,7 +9,6 @@ tern.defineQueryType('sourcegraph:local_symbols', {
   takesFile: true,
   run: function(server, query, file) {
     if (!server.options.plugins.doc_comment) throw new Error('doc_comment plugin not loaded');
-    if (!server.options.plugins.node) throw new Error('node plugin not loaded');
 
     if (!file.ast._id) {
       // file AST nodes have not been assigned IDs by idast
