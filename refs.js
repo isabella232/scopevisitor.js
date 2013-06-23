@@ -9,7 +9,8 @@ tern.defineQueryType('sourcegraph:refs', {
   takesFile: true,
   run: function(server, query, file) {
     if (!server.options.plugins.node) throw new Error('node plugin not loaded');
-    if (!file.ast._sourcegraph_annotatedSymbolDeclIds) throw new Error('AST not yet annotated with symbol decls by "symbols" query; run "symbols" first on ' + file.name);
+    if (!file.ast._sourcegraph_annotatedLocalSymbolDeclIds) throw new Error('AST not yet annotated with local symbol decls: ' + file.name);
+    if (!file.ast._sourcegraph_annotatedExportedSymbolDeclIds) throw new Error('AST not yet annotated with exported symbol decls: ' + file.name);
 
     var res = {refs: []};
     idents.inspect(file.ast, function(ident) {

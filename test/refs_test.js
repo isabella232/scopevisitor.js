@@ -1,12 +1,16 @@
 var should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
+var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, exported_symbols: true, local_symbols: true});
 
 describe('Refs', function() {
   function requestRefs(src, test) {
     server.addFile('a.js', src);
     server.request({
-      query: {type: 'sourcegraph:symbols', file: 'a.js'}}, function(err) {
+      query: {type: 'sourcegraph:exported_symbols', file: 'a.js'}}, function(err) {
+      if (err) throw err;
+    });
+    server.request({
+      query: {type: 'sourcegraph:local_symbols', file: 'a.js'}}, function(err) {
       if (err) throw err;
     });
     server.request({
