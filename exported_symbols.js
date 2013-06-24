@@ -39,7 +39,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       name = name.replace('.prototype', '');
       var fullName = name, nameParts = name.split('.');
       name = nameParts[nameParts.length - 1];
-      if (name[0] == '!') return; // skip param/return symbols
+      if (fullName.indexOf('!') !== -1) return; // skip param/return symbols
       var id = (parentPath ? (parentPath + '/') : '') + nameParts.join('/');
       id = id.replace('exports/', 'exports.');
       var symbol;
