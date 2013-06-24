@@ -67,7 +67,8 @@ var getIdentAndDeclNodes = exports.getIdentAndDeclNodes = function(server, file,
       if (declNode.type == 'ObjectExpression') {
         // CASE: 'var y={z:7}; module.exports.x=y.z;'
         // Set the decl to '7'
-        declNode = findPropInObjectExpressionByKeyPos(declNode, def.start, def.end).value;
+        declNode = findPropInObjectExpressionByKeyPos(declNode, def.start, def.end);
+        declNode = declNode && declNode.value;
       }
       r.decl = declNode;
       if (declNode && declNode.id) r.idents.push(declNode.id);

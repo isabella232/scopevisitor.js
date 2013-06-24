@@ -29,16 +29,10 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         // TODO(sqs): handle this case
         return;
       }
-      if (typeof def == 'string') {
-        def = getDefinitionOfExpr(server, file, (parentPath ? parentPath + '.' : '') + name, def);
-      }
+      if (typeof def == 'string') return;
       if (!def) {
         console.error('Def undefined:', name, parentPath);
         return
-      }
-      if (!def['!type'] && name) {
-        var d = getDefinitionOfExpr(server, file, (parentPath ? parentPath + '.' : '') + name, def);
-        if (d) def['!type'] = d['!type'];
       }
 
       name = name.replace('.prototype', '');
@@ -113,7 +107,6 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
 
       // Traverse children.
-      if (!def.hasOwnProperty) return;
       for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
     }
     function setExportedSymbol(node, symbolId) {
@@ -205,29 +198,3 @@ function nodeIdent(node) {
     throw new Error('Unhandled node type: ' + node.type);
   }
 }
-
-// getDefinitionOfExpr gets the definition of the expr in the top-level scope of the file.
-function getDefinitionOfExpr(server, file, expr, def) {
-  var infer = require('tern/lib/infer');
-  var parts = expr.split('.');
-  var parent = infer.def.parsePath(parts.slice(0, parts.length - 1).join("."));
-  if (!parent.props) return;
-  var name = parts[parts.length-1];
-  var e = parent.props[name];
-
-  var typ = e.getType();
-
-  var symbol_helpers = require('./symbol_helpers');
-  e.originNode = symbol_helpers.getAssignmentOrDeclAround(file, e.originNode.end);
-  var nodes = symbol_helpers.getIdentAndDeclNodes(server, file, e.originNode, name, true);
-  e.originNode = nodes.decl;
-
-  var doc = util.getDoc(server, file, e.originNode);
-  if (doc && (!doc.url || doc.url.indexOf('https://developer.mozilla.org') !== 0)) {
-    doc = doc.doc;
-  } else {
-    doc = undefined;
-  }
-
-  return {'!node': e.originNode, '!type': typ.toString(2), '!doc': doc};
-};
