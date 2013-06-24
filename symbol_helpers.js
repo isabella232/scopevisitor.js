@@ -14,13 +14,18 @@ var getAssignmentAround = exports.getAssignmentAround = function(file, pos) {
   return assign && assign.node;
 }
 
+var getAssignmentOrDeclAround = exports.getAssignmentOrDeclAround = function(file, pos) {
+  var assign = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'AssignmentExpression', 'ObjectExpression']));
+  return assign && assign.node;
+}
+
 var getNamedDeclarationAround = exports.getNamedDeclarationAround = function(file, pos) {
   var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'ObjectExpression']), walkall.traversers);
   return decl && decl.node;
 }
 
 var getDeclarationAround = exports.getDeclarationAround = function(file, pos) {
-  var decl = walk.findNodeAround(file.ast, pos, nodeType(['VariableDeclarator', 'FunctionDeclaration', 'FunctionExpression', 'ObjectExpression']), walkall.traversers);
+  var decl = walk.findNodeAround(file.ast, pos, nodeType(['AssignmentExpression', 'VariableDeclarator', 'FunctionDeclaration', 'FunctionExpression', 'ObjectExpression']), walkall.traversers);
   return decl && decl.node;
 }
 

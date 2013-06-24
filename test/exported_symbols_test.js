@@ -84,6 +84,43 @@ describe('Symbols', function() {
       done();
     });
   });
+  it('emits non-func symbols', function(done) {
+    requestSymbols('//foo\nmodule.exports.x = 9;\nmodule.exports.y=[1];// bar\nmodule.exports.z=exports.x;', function(res) {
+      withoutModule(res.symbols).should.eql(
+          [
+            {
+              id: 'a.js/exports.x',
+              kind: 'var',
+              name: 'x',
+              declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+              decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression',
+              exported: true,
+              obj: {typeExpr: 'number'},
+            },
+            {
+              id: 'a.js/exports.y',
+              kind: 'var',
+              name: 'y',
+              declId: '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+              decl: '/Program/body/1/ExpressionStatement/expression/AssignmentExpression',
+              exported: true,
+              obj: {typeExpr: '[number]'},
+            },
+
+            {
+              id: 'a.js/exports.z',
+              kind: 'var',
+              name: 'z',
+              declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+              decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression',
+              exported: true,
+              obj: {typeExpr: 'number'},
+            },
+          ]
+      );
+      done();
+    });
+  });
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
       var x = getSymbol(res.symbols, 'a.js/exports.x');
@@ -155,6 +192,13 @@ describe('Symbols', function() {
       var m = getSymbol(res.symbols, 'a.js');
       should.equal(m.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
       should.equal(m.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/FunctionExpression');
+      done();
+    });
+  });
+  it('exports when aliased by local var', function(done) {
+    requestSymbols('var c={};exports.C=c;', function(res) {
+      var m = getSymbol(res.symbols, 'a.js/exports.C');
+      should.equal(m.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/ObjectExpression');
       done();
     });
   });
