@@ -20,46 +20,48 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var origins = server.files.map(function(f) { return f.name; });
     server._node.modules[origins[0]].propagate(server.cx.topScope.defProp("exports"));
-    var defs = condense.condense(server.cx, origins, name, {spans: true, spanNodes: true});
+    var defs = condense.condense(server.cx, origins, file.name, {spans: true, spanNodes: true});
 
-    var xs = defs['exports'];
+    function emitRootDef(def) {
+      if (def && def['!type'] && def['!type'].indexOf('fn(') == 0) {
+        // module.exports was reassigned to a func
+        res.symbols.push({
+          id: file.name,
+          kind: 'func',
+          name: file.name.replace(/\.js$/i, ''),
+          decl: def['!node']._id,
 
-    if (xs && xs['!type'] && xs['!type'].indexOf('fn(') == 0) {
-      // module.exports was reassigned to a func
-      res.symbols.push({
-        id: file.name,
-        kind: 'func',
-        name: file.name.replace(/\.js$/i, ''),
-        decl: xs['!node']._id,
-
-	// consider the module to be not exported if the filename starts with "_" (e.g.,
-	// github.com/joyent/node lib/_*.js)
-        exported: path.basename(file.name).indexOf('_') == -1,
-        obj: {typeExpr: xs['!type']},
-      });
-    } else {
-      res.symbols.push({
-        id: file.name,
-        kind: 'module',
-        name: file.name.replace(/\.js$/i, ''),
-        decl: '/Program',
-        exported: true,
-      });
+	  // consider the module to be not exported if the filename starts with "_" (e.g.,
+	  // github.com/joyent/node lib/_*.js)
+          exported: path.basename(file.name).indexOf('_') == -1,
+          obj: {typeExpr: def['!type']},
+        });
+      } else {
+        res.symbols.push({
+          id: file.name,
+          kind: 'module',
+          name: file.name.replace(/\.js$/i, ''),
+          decl: '/Program',
+          exported: true,
+        });
+      }
     }
 
-    for (var name in xs) if (xs.hasOwnProperty(name)) {
-      if (name[0] == '!') continue;
-      var def = xs[name];
+    function visit(parentPath, name, def) {
+      // console.error('VISIT', parentPath, name, def);
       if (typeof def == 'string' && def.indexOf('exports.') == 0) {
         // alias to other export
         // TODO(sqs): handle this case
-        continue;
+        return;
       }
-      if (typeof def == 'string') continue;
-      // TODO(sqs): when is def['!type'] undefined?
-      if (def['!type'] && def['!type'].indexOf('fn(') == 0) {
+      if (typeof def == 'string') return;
+
+      var id = (parentPath === null ? '' : (parentPath + '/')) + name;
+      if ((parentPath == file.name && name == 'exports') || parentPath === null && !defs['exports']) {
+        emitRootDef(def);
+      } else if (def['!type'] && def['!type'].indexOf('fn(') == 0) { // TODO(sqs): when is def['!type'] undefined?
         var symbol = {
-          id: file.name + '/' + name,
+          id: id,
           kind: 'func',
           name: name,
           decl: def['!node']._id,
@@ -67,14 +69,11 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
           obj: {typeExpr: def['!type']},
         };
         res.symbols.push(symbol);
-
         // record that this decl is of an exported symbol so we don't re-emit it later as a local
         // decl
         def['!node']._isExportedDecl = true;
-
         // record what was defined here, for later use in computing refs
         def['!node']._declSymbol = symbol.id;
-
         if (def['!doc']) {
           res.docs.push({
             symbol: symbol.id,
@@ -82,17 +81,13 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
           });
         }
       }
+
+      // Traverse children.
+      for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
     }
-      // if (!emittedModuleExports) {
-      //   res.symbols.push({
-      //     id: file.name + '/module.exports',
-      //     kind: 'var',
-      //     name: require('path').basename(file.name),
-      //     declId: '',
-      //     decl: '/Program',
-      //     exported: false,
-      //   });
-      // }
+
+    visit(null, file.name, defs);
+    if (defs['!define']) visit(null, file.name, defs['!define']);
 
     file.ast._sourcegraph_annotatedExportedSymbolDeclIds = true;
     return res;
