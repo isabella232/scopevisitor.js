@@ -38,7 +38,7 @@ tern.defineQueryType('sourcegraph:refs', {
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         var declId = getDeclIdNode(file, def.start, def.end);
         if (!declId) return;
-        ref.symbol = path.join(file.name, declId._declSymbol || '');
+        ref.symbol = declId._declSymbol
         ref.symbolOrigin = 'local';
       } else {
         if (!def.origin) throw new Error('No origin');

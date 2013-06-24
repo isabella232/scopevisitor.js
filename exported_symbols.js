@@ -47,7 +47,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         if (!parentPath && name == 'exports') {
           // node.js module.exports reassigned to a function.
           symbol = {
-            id: '',
+            id: file.name,
             kind: def['!type'].indexOf('fn(') !== -1 ? 'func' : 'module',
             name: file.name.replace(/\.js$/i, ''),
             decl: def['!node']._id,
@@ -61,7 +61,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         } else if (def['!type'].indexOf('fn(') == 0) {
           // definition
           symbol = {
-            id: id,
+            id: file.name + '/' + id,
             name: name,
             decl: def['!node']._id,
             exported: true,
@@ -123,7 +123,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     if (!emittedModule) {
       res.symbols.push({
-        id: '',
+        id: file.name,
         kind: 'module',
         name: file.name.replace(/\.js$/i, ''),
         decl: '/Program',

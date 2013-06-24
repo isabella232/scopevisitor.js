@@ -26,7 +26,7 @@ tern.defineQueryType('sourcegraph:local_symbols', {
       var declNode = getDeclNodeForLocal(server, file, ident, type, def);
       if (!declNode) return;
       var symbol = {
-        id: 'local:' + ident.name + ':' + ident.start,
+        id: file.name + '/local:' + ident.name + ':' + ident.start,
         kind: 'var',
         name: ident.name,
         declId: ident._id,

@@ -30,7 +30,7 @@ describe('Local symbols', function() {
         withoutModule(res.symbols).should.eql(
           [
             {
-              id: 'local:x:4',
+              id: 'a.js/local:x:4',
               kind: 'var',
               name: 'x',
               declId: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
@@ -48,7 +48,7 @@ describe('Local symbols', function() {
         withoutModule(res.symbols).should.eql(
           [
             {
-              id: 'local:a:10',
+              id: 'a.js/local:a:10',
               kind: 'var',
               name: 'a',
               declId: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/params/0/Identifier',
@@ -65,7 +65,7 @@ describe('Local symbols', function() {
       requestSymbols('function f(a){}', function(res) {
         withoutModule(res.symbols).should.includeEql(
           {
-            id: 'local:a:11',
+            id: 'a.js/local:a:11',
             kind: 'var',
             name: 'a',
             declId: '/Program/body/0/FunctionDeclaration:f/params/0/Identifier',
@@ -81,7 +81,7 @@ describe('Local symbols', function() {
       requestSymbols('(function(){function f(){}})', function(res) {
         withoutModule(res.symbols).should.eql(
           [{
-            id: 'local:f:21',
+            id: 'a.js/local:f:21',
             kind: 'func',
             name: 'f',
             declId: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/body/BlockStatement/body/0/FunctionDeclaration:f/id/Identifier',
