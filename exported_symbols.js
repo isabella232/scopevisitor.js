@@ -20,11 +20,10 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var origins = server.files.map(function(f) { return f.name; });
     server._node.modules[origins[0]].propagate(server.cx.topScope.defProp("exports"));
-    var defs = condense.condense(server.cx, origins, file.name, {spans: true, spanNodes: true});
+    var defs = condense.condense(server.cx, origins[0], file.name, {spans: true, spanNodes: true});
 
     var emittedModule = false;
     function visit(parentPath, name, def) {
-      // console.error('VISIT', parentPath, name, def);
       if (typeof def == 'string' && def.indexOf('exports.') == 0) {
         // alias to other export
         // TODO(sqs): handle this case
