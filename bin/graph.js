@@ -39,7 +39,6 @@ server.request({query: {type: 'sourcegraph:exported_symbols', file: file}}, func
 });
 server.request({query: {type: 'sourcegraph:local_symbols', file: file}}, function(err, res) {
   if (err) throw err;
-  // TODO(sqs): reenable
   docs.push.apply(docs, res.docs);
   symbols.push.apply(symbols, res.symbols);
 });
