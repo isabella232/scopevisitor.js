@@ -69,6 +69,8 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
           if (def['prototype']) {
             // type definition
             symbol.kind = 'type';
+          } else if (Object.keys(def).filter(function(k) { return k[0] !== '!'; }).length) {
+            symbol.kind = 'type';
           } else if (def['!type'].indexOf('fn(') == 0) {
             // func/method definition
             symbol.kind = 'func';
