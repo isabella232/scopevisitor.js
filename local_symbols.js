@@ -17,7 +17,7 @@ tern.defineQueryType('sourcegraph:local_symbols', {
 
     var res = {docs: [], symbols: []};
     idents.inspect(file.ast, function(ident) {
-      if (ident._declSymbol) return;
+      if (typeof ident._declSymbol !== 'undefined') return;
       var type = util.getType(server, file, ident);
       if (type.exprName == 'exports') return;
       var def = util.getDefinition(server, file, ident);
@@ -26,7 +26,7 @@ tern.defineQueryType('sourcegraph:local_symbols', {
       var declNode = getDeclNodeForLocal(server, file, ident, type, def);
       if (!declNode) return;
       var symbol = {
-        id: file.name + '/' + ident.name + ':local:' + ident.start,
+        id: 'local:' + ident.name + ':' + ident.start,
         kind: 'var',
         name: ident.name,
         declId: ident._id,

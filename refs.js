@@ -43,9 +43,11 @@ tern.defineQueryType('sourcegraph:refs', {
         // external ref
         if (storedDefOrigins.indexOf(type.origin) != -1) {
           // ref to stored def (not to external file)
+          if (type.name == 'require') type.name = 'module.require';
+          type.name = type.name.replace('.', '.js/exports.');
           ref.symbol = '@' + type.origin + '/' + type.name;
         } else {
-          ref.symbol = def.origin + '/exports/' + ident.name;
+          ref.symbol = def.origin + '/exports.' + ident.name;
         }
       }
       res.refs.push(ref);
@@ -83,7 +85,7 @@ function getModuleRef(server, file, start, end) {
 // offsets (i.e., its _declSymbol was set by a symbol query of this AST).
 function getDeclIdNode(file, start, end) {
   var test = function(_t, node) {
-    return !!node._declSymbol;
+    return typeof node._declSymbol !== 'undefined';
   };
   var expr = walk.findNodeAt(file.ast, null, end, test, walkall.traversers);
   if (expr && expr.node) {

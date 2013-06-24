@@ -4,6 +4,7 @@ var server = require('../tern_server').startTernServer('.', {doc_comment: true, 
 
 describe('Refs', function() {
   function requestRefs(src, test) {
+    server.reset();
     server.addFile('a.js', src);
     server.request({
       query: {type: 'sourcegraph:exported_symbols', file: 'a.js'}}, function(err) {
@@ -28,12 +29,12 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/require'
+            symbol: '@node/module.js/exports.require'
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/x'
+            symbol: 'test/testdata/b.js/exports.x'
           }
         ]
       );
@@ -41,7 +42,7 @@ describe('Refs', function() {
     });
   });
   it('returns a ref to an external symbol (indirect)', function(done) {
-    requestRefs('var b = require("./test/testdata/b");b;b.x', function(res) {
+    requestRefs('var b = require("./test/testdata/b");b;b.x;b.x()', function(res) {
       res.refs.should.eql(
         [
           {
@@ -52,7 +53,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/require'
+            symbol: '@node/module.js/exports.require'
           },
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
@@ -67,7 +68,17 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/x'
+            symbol: 'test/testdata/b.js/exports.x'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
+            kind: 'ident',
+            symbol: 'test/testdata/b.js/exports.x'
           }
         ]
       );
@@ -86,7 +97,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/require'
+            symbol: '@node/module.js/exports.require'
           },
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
@@ -106,7 +117,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/d'
+            symbol: 'test/testdata/c.js/exports.d'
           }
         ]
       );
@@ -120,12 +131,12 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/require'
+            symbol: '@node/module.js/exports.require'
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: '@node/fs.readFile'
+            symbol: '@node/fs.js/exports.readFile'
           }
         ]
       );
@@ -144,7 +155,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/require'
+            symbol: '@node/module.js/exports.require'
           }
         ]
       );
@@ -158,17 +169,17 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'a.js/x'
+            symbol: 'exports.x'
           },
           {
             astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/id/Identifier',
             kind: 'ident',
-            symbol: 'a.js/y:local:34'
+            symbol: 'local:y:34'
           },
           {
             astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/init/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'a.js/x'
+            symbol: 'exports.x'
           }
         ]
       );
@@ -182,17 +193,17 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'a.js'
+            symbol: ''
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',
-            symbol: 'a.js'
+            symbol: ''
           },
           {
             astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
             kind: 'ident',
-            symbol: 'a.js'
+            symbol: ''
           }
         ]
       );
@@ -207,12 +218,12 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
             kind: 'ident',
-            symbol: 'a.js/x:local:4'
+            symbol: 'x:local:4'
           },
           {
             astNode: '/Program/body/1/ExpressionStatement/expression',
             kind: 'ident',
-            symbol: 'a.js/x:local:4'
+            symbol: 'x:local:4'
           }
         ]
       );

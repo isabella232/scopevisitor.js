@@ -31,8 +31,17 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         return;
       }
       if (typeof def == 'string') return;
+      if (!def) {
+        console.error('Def undefined:', name, parentPath);
+        return
+      }
 
-      var id = (parentPath ? (parentPath + '/') : '') + name;
+      name = name.replace('.prototype', '');
+      var fullName = name, nameParts = name.split('.');
+      name = nameParts[nameParts.length - 1];
+      if (name[0] == '!') return; // skip param/return symbols
+      var id = (parentPath ? (parentPath + '/') : '') + nameParts.join('/');
+      id = id.replace('exports/', 'exports.');
       var symbol;
       if (def['!type']) {
         if (!parentPath && name == 'exports') {
@@ -50,15 +59,40 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
           };
           emittedModule = true;
         } else if (def['!type'].indexOf('fn(') == 0) {
-          // function declaration
+          // definition
           symbol = {
             id: id,
-            kind: 'func',
             name: name,
             decl: def['!node']._id,
             exported: true,
             obj: {typeExpr: def['!type']},
           };
+          if (def['prototype']) {
+            // type definition
+            symbol.kind = 'type';
+          } else if (Object.keys(def).filter(function(k) { return k[0] !== '!'; }).length) {
+            symbol.kind = 'module';
+          } else {
+            // func/method definition
+            symbol.kind = 'func';
+            if (id.indexOf('.prototype.') !== -1) {
+              // method
+              symbol.obj.recvType = id.replace('.prototype.' + name, '');
+            }
+          }
+        }
+      }
+
+      if (symbol && def['!node']) {
+        var nodes = getIdentAndDeclNodesForExport(server, file, {end: def['!node'].end, name: name});
+        if (nodes) {
+          if (nodes.idents) {
+            if (nodes.idents[0]) symbol.declId = nodes.idents[0]._id;
+            nodes.idents.forEach(function(ident) {
+              setExportedSymbol(ident, symbol.id);
+            });
+          }
+          if (nodes.decl) setExportedSymbol(nodes.decl, symbol.id);
         }
       }
 
@@ -137,7 +171,7 @@ var assert = require('assert');
 function getIdentAndDeclNodesForExport(server, file, x) {
   var exportDeclNode = symbol_helpers.getAssignmentAround(file, x.end);
 
-  var isIndirectModuleExportsReassignment = !x.name && !exportDeclNode;
+  var isIndirectModuleExportsReassignment = x.name == 'exports' && !exportDeclNode;
   if (isIndirectModuleExportsReassignment) {
     // we've encountered something like "module.exports = f; function f() {}", where we are
     // reassigning module.exports to an expression whose def is not on the RHS of the "module.exports="
@@ -146,7 +180,7 @@ function getIdentAndDeclNodesForExport(server, file, x) {
     exportDeclNode = findModuleExportsReassignmentTo(server, file, nodeIdent(node));
     assert(exportDeclNode, 'No AssignmentExpression node found containing module.exports reassignment in ' + file.name + ' for ' + JSON.stringify(x));
   }
-  assert(exportDeclNode, 'No export decl node found');
+  if (!exportDeclNode) return;
 
   var r = symbol_helpers.getIdentAndDeclNodes(server, file, exportDeclNode, x.name);
   if (r && r.skip) return;
