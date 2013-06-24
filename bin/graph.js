@@ -17,7 +17,7 @@ var fsize = fs.statSync(file).size;
 var count = {astNodes: 0, docs: 0, symbols: 0, refs: 0};
 if (debug) console.error('Starting to graph', file, '(' + (fsize/1024).toFixed(1) + ' kb)');
 
-var server = require('../tern_server').startTernServer(dir, {ast: true, doc_comment: true, node: true, refs: true, symbols: true});
+var server = require('../tern_server').startTernServer(dir, {ast: true, doc_comment: true, node: true, refs: true, exported_symbols: true, local_symbols: true});
 
 server.request({query: {type: 'sourcegraph:ast', file: file}}, function(err, res) {
   if (err) throw err;
@@ -31,27 +31,35 @@ server.request({query: {type: 'sourcegraph:ast', file: file}}, function(err, res
   process.stdout.write(']');
 });
 
-server.request({query: {type: 'sourcegraph:symbols', file: file}}, function(err, res) {
+var docs = [], symbols = [];
+server.request({query: {type: 'sourcegraph:exported_symbols', file: file}}, function(err, res) {
   if (err) throw err;
-
-  // docs
-  process.stdout.write(',"docs":[');
-  for (var i = 0; i < res.docs.length; ++i) {
-    process.stdout.write(JSON.stringify(res.docs[i]));
-    if (i != res.docs.length - 1) process.stdout.write(',');
-  }
-  count.docs = res.docs.length;
-  process.stdout.write(']');
-
-  // symbols
-  process.stdout.write(',"symbols":[');
-  for (var i = 0; i < res.symbols.length; ++i) {
-    process.stdout.write(JSON.stringify(res.symbols[i]));
-    if (i != res.symbols.length - 1) process.stdout.write(',');
-  }
-  count.symbols = res.symbols.length;
-  process.stdout.write(']');
+  docs.push.apply(docs, res.docs);
+  symbols.push.apply(symbols, res.symbols);
 });
+server.request({query: {type: 'sourcegraph:local_symbols', file: file}}, function(err, res) {
+  if (err) throw err;
+  if(false)docs.push.apply(docs, res.docs);
+  if(false)symbols.push.apply(symbols, res.symbols);
+});
+
+// docs
+process.stdout.write(',"docs":[');
+for (var i = 0; i < docs.length; ++i) {
+  process.stdout.write(JSON.stringify(docs[i]));
+  if (i != docs.length - 1) process.stdout.write(',');
+}
+count.docs = docs.length;
+process.stdout.write(']');
+
+// symbols
+process.stdout.write(',"symbols":[');
+for (var i = 0; i < symbols.length; ++i) {
+  process.stdout.write(JSON.stringify(symbols[i]));
+  if (i != symbols.length - 1) process.stdout.write(',');
+}
+count.symbols = symbols.length;
+process.stdout.write(']');
 
 server.request({query: {type: 'sourcegraph:refs', file: file}}, function(err, res) {
   if (err) throw err;
