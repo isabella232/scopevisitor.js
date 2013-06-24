@@ -1,5 +1,5 @@
 var symbol_helpers = require('./symbol_helpers'), util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
+var condense = require('tern/lib/condense'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
 exports.debug = false;
 
@@ -17,64 +17,82 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
     }
 
     var res = {docs: [], symbols: []};
-    server.request({
-      query: {type: 'node_exports', file: file.name},
-    }, function(err, xres) {
-      if (err) throw err;
-      var emittedModuleExports = false;
-      for (var i = 0; i < xres.exports.length; ++i) {
-        var x = xres.exports[i];
-        function work(x) {
-          var nodes = getIdentAndDeclNodesForExport(server, file, x);
-          if (!nodes) return;
-          var symbol = {
-            id: file.name + '/' + (x.name || 'module.exports'),
-            kind: 'var',
-            name: x.name,
-            declId: nodes.idents[0]._id,
-            decl: nodes.decl._id,
-            exported: true,
-          };
 
-          if (!x.name) emittedModuleExports = true;
+    var origins = server.files.map(function(f) { return f.name; });
+    server._node.modules[origins[0]].propagate(server.cx.topScope.defProp("exports"));
+    var defs = condense.condense(server.cx, origins, name, {spans: true, spanNodes: true});
 
-          // record that this decl is of an exported symbol so we don't re-emit it as a local decl below
-          nodes.decl._isExportedDecl = true;
+    var xs = defs['exports'];
 
-          // record what the idents declares, for later use in computing refs
-          nodes.idents.forEach(function(ident) {
-            ident._declSymbol = symbol.id;
+    if (xs && xs['!type'] && xs['!type'].indexOf('fn(') == 0) {
+      // module.exports was reassigned to a func
+      res.symbols.push({
+        id: file.name,
+        kind: 'func',
+        name: file.name.replace(/\.js$/i, ''),
+        decl: xs['!node']._id,
+
+	// consider the module to be not exported if the filename starts with "_" (e.g.,
+	// github.com/joyent/node lib/_*.js)
+        exported: path.basename(file.name).indexOf('_') == -1,
+        obj: {typeExpr: xs['!type']},
+      });
+    } else {
+      res.symbols.push({
+        id: file.name,
+        kind: 'module',
+        name: file.name.replace(/\.js$/i, ''),
+        decl: '/Program',
+        exported: true,
+      });
+    }
+
+    for (var name in xs) if (xs.hasOwnProperty(name)) {
+      if (name[0] == '!') continue;
+      var def = xs[name];
+      if (typeof def == 'string' && def.indexOf('exports.') == 0) {
+        // alias to other export
+        // TODO(sqs): handle this case
+        continue;
+      }
+      if (typeof def == 'string') continue;
+      // TODO(sqs): when is def['!type'] undefined?
+      if (def['!type'] && def['!type'].indexOf('fn(') == 0) {
+        var symbol = {
+          id: file.name + '/' + name,
+          kind: 'func',
+          name: name,
+          decl: def['!node']._id,
+          exported: true,
+          obj: {typeExpr: def['!type']},
+        };
+        res.symbols.push(symbol);
+
+        // record that this decl is of an exported symbol so we don't re-emit it later as a local
+        // decl
+        def['!node']._isExportedDecl = true;
+
+        // record what was defined here, for later use in computing refs
+        def['!node']._declSymbol = symbol.id;
+
+        if (def['!doc']) {
+          res.docs.push({
+            symbol: symbol.id,
+            body: def['!doc'],
           });
-
-          symbol_helpers.updateSymbolWithType(symbol, util.getType(server, file, nodes.idents[0]).type);
-
-          var doc = util.getDoc(server, file, nodes.decl) || util.getDoc(server, file, nodes.idents[0]);
-          if (doc && doc.doc) {
-            res.docs.push({
-              symbol: symbol.id,
-              body: doc.doc,
-            });
-          }
-
-          res.symbols.push(symbol);
-        }
-        if (exports.debug) work(x);
-        else try { work(x) } catch (e) {
-          console.error('Error processing export ' + x.name + ' in file ' + file.name + ':', e);
         }
       }
-
-      if (!emittedModuleExports) {
-        res.symbols.push({
-          id: file.name + '/module.exports',
-          kind: 'var',
-          name: require('path').basename(file.name),
-          declId: '',
-          decl: '/Program',
-          exported: false,
-        });
-      }
-    });
+    }
+      // if (!emittedModuleExports) {
+      //   res.symbols.push({
+      //     id: file.name + '/module.exports',
+      //     kind: 'var',
+      //     name: require('path').basename(file.name),
+      //     declId: '',
+      //     decl: '/Program',
+      //     exported: false,
+      //   });
+      // }
 
     file.ast._sourcegraph_annotatedExportedSymbolDeclIds = true;
     return res;

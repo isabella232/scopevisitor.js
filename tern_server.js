@@ -17,11 +17,16 @@ exports.startTernServer = function(dir, plugins) {
   Object.keys(plugins).forEach(function(plugin) {
     require(findFile(plugin + '.js', libDir, path.join(ternDir, 'plugin')));
   });
+
+  var defs = ['ecma5'].map(function(def) {
+    return JSON.parse(fs.readFileSync(findFile(def + '.json', path.join(ternDir, 'defs'))));
+  });
   var server = new tern.Server({
     getFile: function(name, c) {
       return fs.readFileSync(name, 'utf8');
     },
     async: false,
+    defs: defs,
     plugins: plugins,
     debug: exports.verbose,
     projectDir: dir
