@@ -12,6 +12,7 @@
     "test": "mocha"
   },
   "dependencies": {
+    "astannotate": "0.0.1",
     "javascript-idents": "0.0.1",
     "idast": "0.0.6",
     "tern": "git://github.com/sqs/tern.git#javascript-grapher",
