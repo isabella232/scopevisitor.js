@@ -22,33 +22,9 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
     server._node.modules[origins[0]].propagate(server.cx.topScope.defProp("exports"));
     var defs = condense.condense(server.cx, origins, file.name, {spans: true, spanNodes: true});
 
-    function emitRootDef(def) {
-      if (def && def['!type'] && def['!type'].indexOf('fn(') == 0) {
-        // module.exports was reassigned to a func
-        res.symbols.push({
-          id: file.name,
-          kind: 'func',
-          name: file.name.replace(/\.js$/i, ''),
-          decl: def['!node']._id,
-
-	  // consider the module to be not exported if the filename starts with "_" (e.g.,
-	  // github.com/joyent/node lib/_*.js)
-          exported: path.basename(file.name).indexOf('_') == -1,
-          obj: {typeExpr: def['!type']},
-        });
-      } else {
-        res.symbols.push({
-          id: file.name,
-          kind: 'module',
-          name: file.name.replace(/\.js$/i, ''),
-          decl: '/Program',
-          exported: true,
-        });
-      }
-    }
-
+    var emittedModule = false;
     function visit(parentPath, name, def) {
-      // console.error('VISIT', parentPath, name, def);
+      console.error('VISIT', parentPath, name, def);
       if (typeof def == 'string' && def.indexOf('exports.') == 0) {
         // alias to other export
         // TODO(sqs): handle this case
@@ -56,18 +32,37 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
       if (typeof def == 'string') return;
 
-      var id = (parentPath === null ? '' : (parentPath + '/')) + name;
-      if ((parentPath == file.name && name == 'exports') || parentPath === null && !defs['exports']) {
-        emitRootDef(def);
-      } else if (def['!type'] && def['!type'].indexOf('fn(') == 0) { // TODO(sqs): when is def['!type'] undefined?
-        var symbol = {
-          id: id,
-          kind: 'func',
-          name: name,
-          decl: def['!node']._id,
-          exported: true,
-          obj: {typeExpr: def['!type']},
-        };
+      var id = (parentPath ? (parentPath + '/') : '') + name;
+      var symbol;
+      if (def['!type']) {
+        if (!parentPath && name == 'exports' && def['!type'].indexOf('fn(') !== -1) {
+          // node.js module.exports reassigned to a function.
+          symbol = {
+            id: '',
+            kind: 'func',
+            name: file.name.replace(/\.js$/i, ''),
+            decl: def['!node']._id,
+
+	    // consider the module to be not exported if the filename starts with "_" (e.g.,
+	    // github.com/joyent/node lib/_*.js)
+            exported: path.basename(file.name).indexOf('_') == -1,
+            obj: {typeExpr: def['!type']},
+          };
+          emittedModule = true;
+        } else if (def['!type'].indexOf('fn(') == 0) {
+          // function declaration
+          symbol = {
+            id: id,
+            kind: 'func',
+            name: name,
+            decl: def['!node']._id,
+            exported: true,
+            obj: {typeExpr: def['!type']},
+          };
+        }
+      }
+
+      if (symbol) {
         res.symbols.push(symbol);
         // record that this decl is of an exported symbol so we don't re-emit it later as a local
         // decl
@@ -86,8 +81,18 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
     }
 
-    visit(null, file.name, defs);
-    if (defs['!define']) visit(null, file.name, defs['!define']);
+    visit(null, '', defs);
+    if (defs['!define']) visit(null, '', defs['!define']);
+
+    if (!emittedModule) {
+        res.symbols.push({
+          id: '',
+          kind: 'module',
+          name: file.name.replace(/\.js$/i, ''),
+          decl: '/Program',
+          exported: true,
+        });
+    }
 
     file.ast._sourcegraph_annotatedExportedSymbolDeclIds = true;
     return res;
