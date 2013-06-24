@@ -98,7 +98,7 @@ function getDeclIdNode(file, start, end) {
   var test = function(_t, node) {
     return typeof node._declSymbol !== 'undefined';
   };
-  var expr = walk.findNodeAt(file.ast, null, end, test, walkall.traversers);
+  var expr = walk.findNodeAround(file.ast, end, test, walkall.traversers);
   if (expr && expr.node) {
     return expr.node;
   }

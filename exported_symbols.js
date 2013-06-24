@@ -85,6 +85,13 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
 
       if (symbol && def['!node']) {
+        var refs = getRefs(server, file, (parentPath ? parentPath + '.' : '') + name, def['!node']);
+        refs.forEach(function(ref) {
+          setExportedSymbol(ref, symbol.id);
+        });
+      }
+
+      if (symbol && def['!node']) {
         var nodes = getIdentAndDeclNodesForExport(server, file, {end: def['!node'].end, name: name});
         if (nodes) {
           if (nodes.idents) {
@@ -199,4 +206,22 @@ function nodeIdent(node) {
   default:
     throw new Error('Unhandled node type: ' + node.type);
   }
+}
+
+function getRefs(server, file, path, node) {
+  var refs = [];
+  infer.withContext(server.cx, function() {
+    var parts = path.split('.');
+    var parentPath = parts.slice(0, parts.length - 1).join('.');
+    var lastPart = parts[parts.length - 1];
+    var p = parentPath ? infer.def.parsePath(parentPath) : server.cx.topScope;
+    var me = p.getProp(lastPart);
+    infer.findRefs(file.ast, file.scope, lastPart, p, function(node, scope) {
+      refs.push(node);
+    });
+    infer.findPropRefs(file.ast, file.scope, p.getType(), lastPart, function(node) {
+      refs.push(node);
+    });
+  });
+  return refs;
 }

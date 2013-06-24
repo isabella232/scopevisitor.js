@@ -8,12 +8,12 @@ describe('Refs', function() {
     server.addFile('a.js', src);
     server.request({
       query: {type: 'sourcegraph:exported_symbols', file: 'a.js'}}, function(err) {
-      if (err) throw err;
-    });
+        if (err) throw err;
+      });
     server.request({
       query: {type: 'sourcegraph:local_symbols', file: 'a.js'}}, function(err) {
-      if (err) throw err;
-    });
+        if (err) throw err;
+      });
     server.request({
       query: {type: 'sourcegraph:refs', file: 'a.js'},
     }, function(err, res) {
@@ -238,18 +238,92 @@ describe('Refs', function() {
   it('returns a ref to a local symbol', function(done) {
     requestRefs('var x = 7; x;', function(res) {
       res.refs.should.eql(
-        res.refs,
         [
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
             kind: 'ident',
-            symbol: 'x:local:4'
+            symbol: 'a.js/local:x:4',
+            symbolOrigin: 'local',
           },
           {
-            astNode: '/Program/body/1/ExpressionStatement/expression',
+            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
-            symbol: 'x:local:4'
+            symbol: 'a.js/local:x:4',
+            symbolOrigin: 'local',
           }
+        ]
+      );
+      done();
+    });
+  });
+  it('doesnt create phantom local refs', function(done) {
+    requestRefs('module.exports=x;function x(){};x.y=z;function z(){}', function(res) {
+      res.refs.should.eql(
+        [
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+            kind: 'ident',
+            symbol: 'a.js',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
+            kind: 'ident',
+            symbol: 'a.js',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
+            kind: 'ident',
+            symbol: 'a.js',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/object/Identifier',
+            kind: 'ident',
+            symbol: 'a.js',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+            kind: 'ident',
+            symbol: 'a.js/exports.y',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
+            kind: 'ident',
+            symbol: 'a.js/exports.y',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/4/FunctionDeclaration:z/id/Identifier',
+            kind: 'ident',
+            symbol: 'a.js/exports.y',
+            symbolOrigin: 'local'
+          }
+        ]
+      );
+      done();
+    });
+  });
+  it('doesnt merge funcs and func params', function(done) {
+    requestRefs('module.exports.x=function(y){}', function(res) {
+      res.refs.should.eql(
+        [
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+            kind: 'ident',
+            symbol: 'a.js/exports.x',
+            symbolOrigin: 'local'
+          },
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/FunctionExpression/params/0/Identifier',
+            kind: 'ident',
+            symbol: 'a.js/local:y:26',
+            symbolOrigin: 'local'
+          },
+
         ]
       );
       done();

@@ -33,3 +33,16 @@ exports.getDoc = function(server, file, ident) {
   });
   return res;
 };
+
+// getRefs gets the refs of the identifier that appear in file.
+exports.getRefs = function(server, file, ident) {
+  var res;
+  server.request({
+    query: {type: 'refs', file: file.name, start: ident.start, end: ident.end}
+  }, function(err, tres) {
+    if (err) throw err;
+    res = tres;
+  });
+  console.error('REFS', ident, res);
+  return res;
+};
