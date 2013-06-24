@@ -29,12 +29,14 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require'
+            symbol: '@node/module.js/exports.require',
+            symbolOrigin: 'predef',
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x'
+            symbol: 'test/testdata/b.js/exports.x',
+            symbolOrigin: 'external',
           }
         ]
       );
@@ -48,37 +50,44 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/id/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require'
+            symbol: '@node/module.js/exports.require',
+            symbolOrigin: 'predef',
           },
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x'
+            symbol: 'test/testdata/b.js/exports.x',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js'
+            symbol: 'test/testdata/b.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x'
+            symbol: 'test/testdata/b.js/exports.x',
+            symbolOrigin: 'external',
           }
         ]
       );
@@ -92,32 +101,38 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/id/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js'
+            symbol: 'test/testdata/c.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require'
+            symbol: '@node/module.js/exports.require',
+            symbolOrigin: 'predef',
           },
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js'
+            symbol: 'test/testdata/c.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js'
+            symbol: 'test/testdata/c.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js'
+            symbol: 'test/testdata/c.js',
+            symbolOrigin: 'external',
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/exports.d'
+            symbol: 'test/testdata/c.js/exports.d',
+            symbolOrigin: 'external',
           }
         ]
       );
@@ -131,12 +146,14 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require'
+            symbol: '@node/module.js/exports.require',
+            symbolOrigin: 'predef',
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: '@node/fs.js/exports.readFile'
+            symbol: '@node/fs.js/exports.readFile',
+            symbolOrigin: 'predef',
           }
         ]
       );
@@ -150,12 +167,14 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/id/Identifier',
             kind: 'ident',
-            symbol: '@node/fs'
+            symbol: '@node/fs.js',
+            symbolOrigin: 'predef',
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require'
+            symbol: '@node/module.js/exports.require',
+            symbolOrigin: 'predef',
           }
         ]
       );
@@ -169,17 +188,20 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'exports.x'
+            symbol: 'a.js/exports.x',
+            symbolOrigin: 'local',
           },
           {
             astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/id/Identifier',
             kind: 'ident',
-            symbol: 'local:y:34'
+            symbol: 'a.js/local:y:34',
+            symbolOrigin: 'local',
           },
           {
             astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/init/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'exports.x'
+            symbol: 'a.js/exports.x',
+            symbolOrigin: 'local',
           }
         ]
       );
@@ -193,17 +215,20 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: ''
+            symbol: 'a.js',
+            symbolOrigin: 'local',
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',
-            symbol: ''
+            symbol: 'a.js',
+            symbolOrigin: 'local',
           },
           {
             astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
             kind: 'ident',
-            symbol: ''
+            symbol: 'a.js',
+            symbolOrigin: 'local',
           }
         ]
       );

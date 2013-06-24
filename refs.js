@@ -1,5 +1,5 @@
 var util = require('./util');
-var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
+var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
 exports.debug = false;
 
@@ -38,7 +38,7 @@ tern.defineQueryType('sourcegraph:refs', {
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         var declId = getDeclIdNode(file, def.start, def.end);
         if (!declId) return;
-        ref.symbol = file.name + '/' + declId._declSymbol;
+        ref.symbol = path.join(file.name, declId._declSymbol || '');
         ref.symbolOrigin = 'local';
       } else {
         if (!def.origin) throw new Error('No origin');
@@ -46,8 +46,14 @@ tern.defineQueryType('sourcegraph:refs', {
         if (storedDefOrigins.indexOf(type.origin) != -1) {
           // ref to stored def (not to external file)
           if (type.name == 'require') type.name = 'module.require';
-          type.name = type.name.replace('.', '.js/exports.');
-          ref.symbol = type.origin + '/' + type.name;
+          ref.symbol = '@' + type.origin + '/' + type.name;
+          if (type.name.indexOf('.') == -1) {
+            // predef module ref
+            ref.symbol += '.js';
+          } else {
+            // predef exported symbol ref
+            ref.symbol = ref.symbol.replace('.', '.js/exports.');
+          }
           ref.symbolOrigin = 'predef';
         } else {
           ref.symbol = def.origin + '/exports.' + ident.name;
