@@ -47,7 +47,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/id/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/module.exports'
+            symbol: 'test/testdata/b.js'
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/init/CallExpression/callee/Identifier',
@@ -57,12 +57,12 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/module.exports'
+            symbol: 'test/testdata/b.js'
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/b.js/module.exports'
+            symbol: 'test/testdata/b.js'
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property/Identifier',
@@ -81,7 +81,7 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/id/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/module.exports'
+            symbol: 'test/testdata/c.js'
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/CallExpression/callee/Identifier',
@@ -91,17 +91,17 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/module.exports'
+            symbol: 'test/testdata/c.js'
           },
           {
             astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/module.exports'
+            symbol: 'test/testdata/c.js'
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
             kind: 'ident',
-            symbol: 'test/testdata/c.js/module.exports'
+            symbol: 'test/testdata/c.js'
           },
           {
             astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
@@ -182,17 +182,17 @@ describe('Refs', function() {
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: 'a.js/module.exports'
+            symbol: 'a.js'
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',
-            symbol: 'a.js/module.exports'
+            symbol: 'a.js'
           },
           {
             astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
             kind: 'ident',
-            symbol: 'a.js/module.exports'
+            symbol: 'a.js'
           }
         ]
       );

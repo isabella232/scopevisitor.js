@@ -24,7 +24,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var emittedModule = false;
     function visit(parentPath, name, def) {
-      console.error('VISIT', parentPath, name, def);
+      // console.error('VISIT', parentPath, name, def);
       if (typeof def == 'string' && def.indexOf('exports.') == 0) {
         // alias to other export
         // TODO(sqs): handle this case
@@ -35,11 +35,11 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       var id = (parentPath ? (parentPath + '/') : '') + name;
       var symbol;
       if (def['!type']) {
-        if (!parentPath && name == 'exports' && def['!type'].indexOf('fn(') !== -1) {
+        if (!parentPath && name == 'exports') {
           // node.js module.exports reassigned to a function.
           symbol = {
             id: '',
-            kind: 'func',
+            kind: def['!type'].indexOf('fn(') !== -1 ? 'func' : 'module',
             name: file.name.replace(/\.js$/i, ''),
             decl: def['!node']._id,
 
@@ -64,11 +64,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
       if (symbol) {
         res.symbols.push(symbol);
-        // record that this decl is of an exported symbol so we don't re-emit it later as a local
-        // decl
-        def['!node']._isExportedDecl = true;
-        // record what was defined here, for later use in computing refs
-        def['!node']._declSymbol = symbol.id;
+        setExportedSymbol(def['!node'], symbol.id);
         if (def['!doc']) {
           res.docs.push({
             symbol: symbol.id,
@@ -80,18 +76,26 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       // Traverse children.
       for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
     }
+    function setExportedSymbol(node, symbolId) {
+      // record that this decl is of an exported symbol so we don't re-emit it later as a local
+      // decl
+      node._isExportedDecl = true;
+      // record what was defined here, for later use in computing refs
+      node._declSymbol = symbolId;
+    }
 
     visit(null, '', defs);
     if (defs['!define']) visit(null, '', defs['!define']);
 
     if (!emittedModule) {
-        res.symbols.push({
-          id: '',
-          kind: 'module',
-          name: file.name.replace(/\.js$/i, ''),
-          decl: '/Program',
-          exported: true,
-        });
+      res.symbols.push({
+        id: '',
+        kind: 'module',
+        name: file.name.replace(/\.js$/i, ''),
+        decl: '/Program',
+        exported: true,
+      });
+      setExportedSymbol(file.ast, '');
     }
 
     file.ast._sourcegraph_annotatedExportedSymbolDeclIds = true;

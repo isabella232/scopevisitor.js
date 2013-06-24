@@ -33,28 +33,19 @@ tern.defineQueryType('sourcegraph:refs', {
           if (exports.debug) console.error('Failed to resolve module ref at file', file.name + ':' + ident.start + '-' + ident.end, 'at identifier type', type, 'definition', def);
           return;
         }
-        ref.symbol = mod + '/module.exports';
+        ref.symbol = mod;
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
-        // internal (same file) ref
-        if (type.exprName == 'exports') {
-          // handle reference to module.exports. the 'Refs returns a ref to reassigned
-          // module.exports' test is an example of where this needs to be special cased.
-          ref.symbol = def.origin + '/module.exports';
-        } else {
-          var declId = getDeclIdNode(file, def.start, def.end);
-          if (!declId) return;
-          ref.symbol = declId._declSymbol;
-        }
+        var declId = getDeclIdNode(file, def.start, def.end);
+        if (!declId) return;
+        ref.symbol = declId._declSymbol;
       } else {
         if (!def.origin) throw new Error('No origin');
         // external ref
         if (storedDefOrigins.indexOf(type.origin) != -1) {
           // ref to stored def (not to external file)
-          // query for type to get full name of referenced symbol (not just ident); e.g.,
-          // "fs.readFile" not just "readFile"
           ref.symbol = '@' + type.origin + '/' + type.name;
         } else {
-          ref.symbol = def.origin + '/' + ident.name;
+          ref.symbol = def.origin + '/exports/' + ident.name;
         }
       }
       res.refs.push(ref);
