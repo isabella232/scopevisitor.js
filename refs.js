@@ -34,10 +34,12 @@ tern.defineQueryType('sourcegraph:refs', {
           return;
         }
         ref.symbol = mod;
+        ref.symbolOrigin = 'external';
       } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
         var declId = getDeclIdNode(file, def.start, def.end);
         if (!declId) return;
-        ref.symbol = declId._declSymbol;
+        ref.symbol = file.name + '/' + declId._declSymbol;
+        ref.symbolOrigin = 'local';
       } else {
         if (!def.origin) throw new Error('No origin');
         // external ref
@@ -45,9 +47,11 @@ tern.defineQueryType('sourcegraph:refs', {
           // ref to stored def (not to external file)
           if (type.name == 'require') type.name = 'module.require';
           type.name = type.name.replace('.', '.js/exports.');
-          ref.symbol = '@' + type.origin + '/' + type.name;
+          ref.symbol = type.origin + '/' + type.name;
+          ref.symbolOrigin = 'predef';
         } else {
           ref.symbol = def.origin + '/exports.' + ident.name;
+          ref.symbolOrigin = 'external';
         }
       }
       res.refs.push(ref);
