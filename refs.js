@@ -45,6 +45,7 @@ tern.defineQueryType('sourcegraph:refs', {
         // external ref
         if (storedDefOrigins.indexOf(type.origin) != -1) {
           // ref to stored def (not to external file)
+          if (!type.name) return;
           if (type.name == 'require') type.name = 'module.require';
           ref.symbol = '@' + type.origin + '/' + type.name;
           if (type.name.indexOf('.') == -1) {
