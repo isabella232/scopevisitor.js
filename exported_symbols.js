@@ -27,7 +27,12 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         // TODO(sqs): handle this case
         return;
       }
-      if (typeof def == 'string') return;
+      if (typeof def == 'string') {
+        def = {
+          '!node': getDefinitionNode(server, file, (parentPath ? parentPath + '.' : '') + name),
+          '!type': def,
+        };
+      }
       if (!def) {
         console.error('Def undefined:', name, parentPath);
         return;
@@ -110,7 +115,9 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
 
       // Traverse children.
-      for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
+      if (typeof def === 'object') {
+        for (var key in def) if (def.hasOwnProperty(key) && key[0] !== '!') visit(id, key, def[key]);
+      }
     }
     function setExportedSymbol(node, symbolId) {
       // record that this decl is of an exported symbol so we don't re-emit it later as a local
@@ -155,4 +162,24 @@ function getRefs(server, file, path, node) {
     });
   });
   return refs;
+}
+
+function getDefinitionNode(server, file, path) {
+  var nameNode = getOriginNameNode(server, file, path);
+  if (nameNode) {
+    return defnode.findDefinitionNode(file.ast, nameNode.start, nameNode.end);
+  }
+}
+
+function getOriginNameNode(server, file, path) {
+  var originNode;
+  infer.withContext(server.cx, function() {
+    var parts = path.split('.');
+    var parentPath = parts.slice(0, parts.length - 1).join('.');
+    var lastPart = parts[parts.length - 1];
+    var p = parentPath ? infer.def.parsePath(parentPath) : server.cx.topScope;
+    var me = p.getProp(lastPart);
+    originNode = me.originNode;
+  });
+  return originNode;
 }
