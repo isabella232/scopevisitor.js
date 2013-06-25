@@ -161,7 +161,7 @@ function findModuleExportsReassignmentTo(server, file, node) {
       if (assignExpr) return;
     }
   });
-  return assignExpr.node;
+  return assignExpr && assignExpr.node;
 }
 
 function isModuleExports(server, file, memberExpr) {
@@ -169,7 +169,8 @@ function isModuleExports(server, file, memberExpr) {
   var lhsObject = util.getType(server, file, memberExpr.object);
   // lhsObject should be "module." in "module.exports" ObjectExpression
   var lhsProp = util.getType(server, file, memberExpr.property);
-  return (lhsObject.name == 'Module' && lhsProp.exprName == 'exports');
+  // lodash.js uses freeModule and freeExports...support that but TODO(sqs) find a better way
+  return (/Module/.test(lhsObject.name || lhsObject.exprName) && /exports/i.test(lhsProp.exprName));
 }
 
 // getIdentAndDeclNodes searches the AST for the most appropriate identifier and declaration to associate with
