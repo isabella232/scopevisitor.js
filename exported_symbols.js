@@ -72,7 +72,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
           symbol = {
             id: file.name + '/' + id,
             name: name,
-            decl: def['!node']._id,
+            decl: def['!node'] ? def['!node']._id : '',
             exported: true,
             obj: {typeExpr: def['!type']},
           };
@@ -105,16 +105,17 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         setExportedSymbol(def['!node'], symbol.id);
         if (def['!node']._id != '/Program') {
           var nameNodes = defnode.findNameNodes(file.ast, def['!node'].start, def['!node'].end);
-          nameNodes.forEach(function(nameNode) {
-            setExportedSymbol(nameNode, symbol.id);
-          });
-          if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
+          if (nameNodes) {
+            nameNodes.forEach(function(nameNode) {
+              setExportedSymbol(nameNode, symbol.id);
+            });
+            if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
+          }
         }
       }
 
       if (symbol) {
         res.symbols.push(symbol);
-        setExportedSymbol(def['!node'], symbol.id);
         if (def['!doc']) {
           res.docs.push({
             symbol: symbol.id,
