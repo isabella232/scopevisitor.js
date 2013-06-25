@@ -1,5 +1,5 @@
 var symbol_helpers = require('./symbol_helpers'), util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
+var idast = require('idast'), idents = require('javascript-idents'), tern = require('tern');
 
 exports.debug = false;
 

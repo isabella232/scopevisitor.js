@@ -158,7 +158,7 @@ describe('Symbols', function() {
   it('sets the decl to the def of the RHS', function(done) {
     requestSymbols('module.exports=f;function f(){}', function(res) {
       var f = getSymbol(res.symbols, 'a.js');
-      should.equal(f.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(f.declId, '/Program/body/1/FunctionDeclaration:f/id/Identifier');
       should.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
       done();
     });
@@ -182,7 +182,7 @@ describe('Symbols', function() {
   it('sets the decl to the exported function expr (reassign)', function(done) {
     requestSymbols('var f = function(){};module.exports=f', function(res) {
       var f = getSymbol(res.symbols, 'a.js');
-      should.equal(f.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(f.declId, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:f/id/Identifier');
       should.equal(f.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:f/init/FunctionExpression');
       done();
     });

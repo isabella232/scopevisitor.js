@@ -213,12 +213,6 @@ describe('Refs', function() {
       res.refs.should.eql(
         [
           {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local',
-          },
-          {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',
             symbol: 'a.js',
@@ -260,12 +254,6 @@ describe('Refs', function() {
     requestRefs('module.exports=x;function x(){};x.y=z;function z(){}', function(res) {
       res.refs.should.eql(
         [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local'
-          },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
             kind: 'ident',

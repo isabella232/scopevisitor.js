@@ -1,5 +1,4 @@
-var symbol_helpers = require('./symbol_helpers'), util = require('./util');
-var condense = require('tern/lib/condense'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
+var condense = require('tern/lib/condense'), defnode = require('defnode'), idast = require('idast'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern');
 
 exports.debug = false;
 
@@ -23,7 +22,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var emittedModule = false;
     function visit(parentPath, name, def) {
-      if (typeof def == 'string' && def.indexOf('exports.') == 0) {
+      if (typeof def == 'string' && def.indexOf('exports.') === 0) {
         // alias to other export
         // TODO(sqs): handle this case
         return;
@@ -31,7 +30,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       if (typeof def == 'string') return;
       if (!def) {
         console.error('Def undefined:', name, parentPath);
-        return
+        return;
       }
 
       name = name.replace('.prototype', '');
@@ -50,8 +49,8 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
             name: file.name.replace(/\.js$/i, ''),
             decl: def['!node']._id,
 
-	    // consider the module to be not exported if the filename starts with "_" (e.g.,
-	    // github.com/joyent/node lib/_*.js)
+            // consider the module to be not exported if the filename starts with "_" (e.g.,
+            // github.com/joyent/node lib/_*.js)
             exported: path.basename(file.name).indexOf('_') == -1,
             obj: {typeExpr: def['!type']},
           };
@@ -70,7 +69,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
             symbol.kind = 'type';
           } else if (Object.keys(def).filter(function(k) { return k[0] !== '!'; }).length) {
             symbol.kind = 'type';
-          } else if (def['!type'].indexOf('fn(') == 0) {
+          } else if (def['!type'].indexOf('fn(') === 0) {
             // func/method definition
             symbol.kind = 'func';
             if (id.indexOf('.prototype.') !== -1) {
@@ -91,16 +90,12 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
 
       if (symbol && def['!node']) {
-        var nodes = getIdentAndDeclNodesForExport(server, file, {end: def['!node'].end, name: name});
-        if (nodes) {
-          if (nodes.idents) {
-            if (nodes.idents[0]) symbol.declId = nodes.idents[0]._id;
-            nodes.idents.forEach(function(ident) {
-              setExportedSymbol(ident, symbol.id);
-            });
-          }
-          if (nodes.decl) setExportedSymbol(nodes.decl, symbol.id);
-        }
+        setExportedSymbol(def['!node'], symbol.id);
+        var nameNodes = defnode.findNameNodes(file.ast, def['!node'].start, def['!node'].end);
+        nameNodes.forEach(function(nameNode) {
+          setExportedSymbol(nameNode, symbol.id);
+        });
+        if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
       }
 
       if (symbol) {
@@ -143,70 +138,6 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
     return res;
   }
 });
-
-function findModuleExportsReassignmentTo(server, file, node) {
-  var assignExpr;
-  server.request({query: {type: 'refs', file: file.name, start: node.start, end: node.end}}, function(err, res) {
-    if (err) throw err;
-    for (var i = 0; i < res.refs.length; ++i) {
-      var ref = res.refs[i];
-      if (ref.file != file.name) continue;
-
-      // Find an AssignmentExpression wrapping this ref that has an LHS of "module.exports".
-      assignExpr = walk.findNodeAround(file.ast, ref.end, function(_t, node) {
-        if (node.type != 'AssignmentExpression') return false;
-        if (node.left.type != 'MemberExpression') return false;
-        return isModuleExports(server, file, node.left);
-      });
-      if (assignExpr) return;
-    }
-  });
-  return assignExpr && assignExpr.node;
-}
-
-function isModuleExports(server, file, memberExpr) {
-  assert.equal(memberExpr.type, 'MemberExpression');
-  var lhsObject = util.getType(server, file, memberExpr.object);
-  // lhsObject should be "module." in "module.exports" ObjectExpression
-  var lhsProp = util.getType(server, file, memberExpr.property);
-  // lodash.js uses freeModule and freeExports...support that but TODO(sqs) find a better way
-  return (/Module/.test(lhsObject.name || lhsObject.exprName) && /exports/i.test(lhsProp.exprName));
-}
-
-// getIdentAndDeclNodes searches the AST for the most appropriate identifier and declaration to associate with
-// the named symbol at the specified start/end character offsets.
-var assert = require('assert');
-function getIdentAndDeclNodesForExport(server, file, x) {
-  var exportDeclNode = symbol_helpers.getAssignmentAround(file, x.end);
-
-  var isIndirectModuleExportsReassignment = x.name == 'exports' && !exportDeclNode;
-  if (isIndirectModuleExportsReassignment) {
-    // we've encountered something like "module.exports = f; function f() {}", where we are
-    // reassigning module.exports to an expression whose def is not on the RHS of the "module.exports="
-    // AssignmentExpression.
-    var node = symbol_helpers.getNamedDeclarationAround(file, x.end);
-    exportDeclNode = findModuleExportsReassignmentTo(server, file, nodeIdent(node));
-    assert(exportDeclNode, 'No AssignmentExpression node found containing module.exports reassignment in ' + file.name + ' for ' + JSON.stringify(x));
-  }
-  if (!exportDeclNode) return;
-
-  var r = symbol_helpers.getIdentAndDeclNodes(server, file, exportDeclNode, x.name);
-  if (r && r.skip) return;
-  assert(r.idents.length > 0, 'No ident found in ' + file.name + ' for ' + JSON.stringify(x));
-  assert(r.decl, 'No decl found in ' + file.name + ' for ' + JSON.stringify(x));
-  return r;
-}
-
-function nodeIdent(node) {
-  switch (node.type) {
-  case 'FunctionDeclaration':
-    return node.id;
-  case 'VariableDeclarator':
-    return node.id;
-  default:
-    throw new Error('Unhandled node type: ' + node.type);
-  }
-}
 
 function getRefs(server, file, path, node) {
   var refs = [];
