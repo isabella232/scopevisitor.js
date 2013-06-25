@@ -23,6 +23,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
     var emittedModule = false;
     function visit(parentPath, name, def) {
       var path = (parentPath ? parentPath + '.' : '') + name;
+      if (path.indexOf('<i>') !== -1) return;
 
       if (typeof def == 'string' && def.indexOf('exports.') === 0) {
         // alias to other export
@@ -40,7 +41,6 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         return;
       }
 
-      name = name.replace('.prototype', '');
       var fullName = name, nameParts = name.split('.');
       name = nameParts[nameParts.length - 1];
       if (fullName.indexOf('!') !== -1) return; // skip param/return symbols
