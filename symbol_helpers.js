@@ -81,7 +81,7 @@ var getIdentAndDeclNodes = exports.getIdentAndDeclNodes = function(server, file,
     if (node.type == 'FunctionDeclaration' || node.type == 'FunctionExpression') {
       if (node.params.indexOf(origNode) != -1) {
         // origNode is a param of the func
-        return {ident: origNode, decl: node};
+        return {ident: origNode, decl: origNode};
       } else return {ident: node.id, decl: node};
     } else if (node.type == 'VariableDeclarator') {
       return {ident: node.id, decl: node};

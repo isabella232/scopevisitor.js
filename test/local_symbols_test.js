@@ -52,7 +52,7 @@ describe('Local symbols', function() {
               kind: 'var',
               name: 'a',
               declId: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/params/0/Identifier',
-              decl: '/Program/body/0/ExpressionStatement/expression/FunctionExpression',
+              decl: '/Program/body/0/ExpressionStatement/expression/FunctionExpression/params/0/Identifier',
               exported: false,
               obj: {typeExpr: '?'}
             }
@@ -69,7 +69,7 @@ describe('Local symbols', function() {
             kind: 'var',
             name: 'a',
             declId: '/Program/body/0/FunctionDeclaration:f/params/0/Identifier',
-            decl: '/Program/body/0/FunctionDeclaration:f',
+            decl: '/Program/body/0/FunctionDeclaration:f/params/0/Identifier',
             exported: false,
             obj: {typeExpr: '?'}
           }

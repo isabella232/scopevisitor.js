@@ -36,19 +36,24 @@ function graph(file, src, test) {
 }
 
 function check(file, src, ast, r) {
-  var declVisitor = astannotate.rangeVisitor('DECL', null, function(range, x) {
-    x = eval('(' + x + ')');
-    var sym = r.symbols.filter(function(s) { return s.decl == range.node._id; })[0];
-    should.exist(sym, 'No symbol found with declaration at ' + range.node._id);
-    for (var key in x) if (x.hasOwnProperty(key)) {
-      var v = x[key];
-      if (v instanceof RegExp) {
-        sym[key].should.match(v);
-      } else {
-        sym[key].should.eql(v);
+  function mkDeclVisitor(directive) {
+    return astannotate.rangeVisitor(directive, null, function(range, x) {
+      should.exist(range.node, 'No AST node found at range ' + JSON.stringify(range));
+      x = eval('(' + x + ')');
+      var sym = r.symbols.filter(function(s) { return s.decl == range.node._id; })[0];
+      should.exist(sym, 'No symbol found with declaration at ' + range.node._id + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
+      for (var key in x) if (x.hasOwnProperty(key)) {
+        var v = x[key];
+        if (v instanceof RegExp) {
+          sym[key].should.match(v);
+        } else {
+          sym[key].should.eql(v);
+        }
       }
-    }
-  });
+    });
+  }
+  // Support nesting (use DECL1 for the first level of nesting).
+  var declVisitor = mkDeclVisitor('DECL'), decl1Visitor = mkDeclVisitor('DECL1');
   var declIdVisitor = astannotate.nodeVisitor('DECLID', 'Identifier', function(identNode, x) {
     x = eval('(' + x + ')');
     var sym = r.symbols.filter(function(s) { return s.declId == identNode._id; })[0];
@@ -69,11 +74,11 @@ function check(file, src, ast, r) {
       ref.symbol.should.eql(x);
     }
   });
-  astannotate.multi([declVisitor, declIdVisitor, refVisitor])(src, ast);
+  astannotate.multi([declVisitor, decl1Visitor, declIdVisitor, refVisitor])(src, ast);
 }
 
 var testCases = [
-  {dir: 'simple', files: ['local_vars.js']},
+  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js']},
 ];
 
 testCases.forEach(function(testCase) {
