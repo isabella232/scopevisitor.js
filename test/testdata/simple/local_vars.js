@@ -1,8 +1,8 @@
-var /*DECL*/a/*DECLID:'local:a:12'*/ = 7/*DECL:{id:'local:a:'}*/;
+var a/*DECLID:'local:a:4'*/ = /*DECL*/7/*DECL:{id:'local:a:'}*/;
 
-a /*REF:'local:a:12'*/
+a /*REF:'local:a:4'*/
 
-a /*REF:'local:a:12'*/ = 7;
+a /*REF:'local:a:4'*/ = 7;
 
 var b/*DECLID:'local:b:'*/ = {
 

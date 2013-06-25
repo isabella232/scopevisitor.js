@@ -1,5 +1,5 @@
-var symbol_helpers = require('./symbol_helpers'), util = require('./util');
-var idast = require('idast'), idents = require('javascript-idents'), tern = require('tern');
+var util = require('./util');
+var defnode = require('defnode'), idast = require('idast'), idents = require('javascript-idents'), tern = require('tern');
 
 exports.debug = false;
 
@@ -23,7 +23,7 @@ tern.defineQueryType('sourcegraph:local_symbols', {
       var def = util.getDefinition(server, file, ident);
       var isDecl = (def.start == ident.start && def.end == ident.end && def.file == file.name && (!type.origin || type.origin == file.name));
       if (!isDecl) return;
-      var declNode = getDeclNodeForLocal(server, file, ident, type, def);
+      var declNode = defnode.findDefinitionNode(file.ast, ident.start, ident.end);
       if (!declNode) return;
       if (declNode._declSymbol && ident._id.indexOf('params') == -1) return;
       var symbol = {
@@ -34,7 +34,7 @@ tern.defineQueryType('sourcegraph:local_symbols', {
         decl: declNode._id,
         exported: false,
       };
-      symbol_helpers.updateSymbolWithType(symbol, util.getType(server, file, ident).type);
+      updateSymbolWithType(symbol, util.getType(server, file, ident).type);
       res.symbols.push(symbol);
       // record what this ident declares, for later use in computing refs
       ident._declSymbol = symbol.id;
@@ -54,10 +54,10 @@ tern.defineQueryType('sourcegraph:local_symbols', {
   }
 });
 
-function getDeclNodeForLocal(server, file, node, type, def) {
-  var declNode = symbol_helpers.getDeclarationAround(file, node.end);
-  if (!declNode) return;
-  var nodes = symbol_helpers.getIdentAndDeclNodes(server, file, declNode, node.name, true, node);
-  if (nodes) return nodes.decl;
-  else if (exports.debug) console.error('Failed to get decl node for local symbol at ' + file.name + ':' + node.start + '-' + node.end);
+// updateSymbolWithType sets symbol's obj and kind based on the type.
+function updateSymbolWithType(symbol, type) {
+  if (type) {
+    symbol.obj = {typeExpr: type};
+    symbol.kind = symbol.obj.typeExpr.indexOf('fn(') === 0 ? 'func' : 'var';
+  }
 }

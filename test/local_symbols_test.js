@@ -34,7 +34,7 @@ describe('Local symbols', function() {
               kind: 'var',
               name: 'x',
               declId: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
-              decl: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x',
+              decl: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/init/Literal',
               exported: false,
               obj: {typeExpr: 'number'}
             }

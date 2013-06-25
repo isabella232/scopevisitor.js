@@ -5,8 +5,8 @@
 
 a();/*REF:'local:a:17'*/
 
-var /*DECL*/f = a/*DECL:{id:'local:f:'}*/;/*REF:'local:a:17'*/
+var f = /*DECL*/a/*DECL:{id:'local:f:'}*/;/*REF:'local:a:17'*/
 
-var /*DECL*/g/*DECLID:'local:g:'*/ = function(/*DECL1*/h/*DECL1:{id:'local:h:276'}*/) {
+var g/*DECLID:'local:g:'*/ = /*DECL*/function(/*DECL1*/h/*DECL1:{id:'local:h:276'}*/) {
   return h;/*REF:'local:h:276'*/
 }/*DECL:{id:'local:g:'}*/;
