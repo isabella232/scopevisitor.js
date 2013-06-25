@@ -18,9 +18,8 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var res = {docs: [], symbols: []};
 
-    var origins = server.files.map(function(f) { return f.name; });
-    server._node.modules[origins[0]].propagate(server.cx.topScope.defProp("exports"));
-    var defs = condense.condense(server.cx, origins[0], file.name, {spans: true, spanNodes: true});
+    server._node.modules[file.name].propagate(server.cx.topScope.defProp("exports"));
+    var defs = condense.condense(server.cx, file.name, file.name, {spans: true, spanNodes: true});
 
     var emittedModule = false;
     function visit(parentPath, name, def) {

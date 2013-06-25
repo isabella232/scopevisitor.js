@@ -38,16 +38,16 @@ function graph(file, src, test) {
 function check(file, src, ast, r) {
   function mkDeclVisitor(directive) {
     return astannotate.rangeVisitor(directive, null, function(range, x) {
-      should.exist(range.node, 'No AST node found at range ' + JSON.stringify(range));
+      should.exist(range.node, range.node || ('No AST node found at range ' + JSON.stringify(range)));
       x = eval('(' + x + ')');
-      var sym = r.symbols.filter(function(s) { return s.decl == range.node._id; })[0];
-      should.exist(sym, 'No symbol found with declaration at ' + range.node._id + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
+      var sym = r.symbols.filter(function(s) { return s.decl == range.node._id && s.id.indexOf(x._ignoreSymbol) == -1; })[0];
+      should.exist(sym, 'No symbol found with declaration at ' + range.node._id + '\nWant: ' + JSON.stringify(x) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
       for (var key in x) if (x.hasOwnProperty(key)) {
         var v = x[key];
         if (v instanceof RegExp) {
           sym[key].should.match(v);
         } else {
-          sym[key].should.eql(v);
+          sym[key].should.include(v);
         }
       }
     });
@@ -57,28 +57,20 @@ function check(file, src, ast, r) {
   var declIdVisitor = astannotate.nodeVisitor('DECLID', 'Identifier', function(identNode, x) {
     x = eval('(' + x + ')');
     var sym = r.symbols.filter(function(s) { return s.declId == identNode._id; })[0];
-    should.exist(sym, 'No symbol found with declId at ' + identNode._id);
-    if (x instanceof RegExp) {
-      sym.id.should.match(x);
-    } else {
-      sym.id.should.eql(x);
-    }
+    should.exist(sym, 'No symbol found with declId at ' + identNode._id + '\nWant: ' + JSON.stringify(x) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
+    sym.id.should.include(x);
   });
   var refVisitor = astannotate.nodeVisitor('REF', 'Identifier', function(identNode, x) {
     x = eval('(' + x + ')');
     var ref = r.refs.filter(function(r) { return r.astNode == identNode._id; })[0];
     should.exist(ref, 'No ref found at AST node ' + identNode._id);
-    if (x instanceof RegExp) {
-      ref.symbol.should.match(x);
-    } else {
-      ref.symbol.should.eql(x);
-    }
+    ref.symbol.should.include(x);
   });
   astannotate.multi([declVisitor, decl1Visitor, declIdVisitor, refVisitor])(src, ast);
 }
 
 var testCases = [
-  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js']},
+  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js', 'node_exports.js']},
 ];
 
 testCases.forEach(function(testCase) {
