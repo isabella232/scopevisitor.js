@@ -1,4 +1,4 @@
-var condense = require('tern/lib/condense'), defnode = require('defnode'), idast = require('idast'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern');
+var condense = require('tern/lib/condense'), defnode = require('defnode'), idast = require('idast'), infer = require('tern/lib/infer'), path_ = require('path'), tern = require('tern');
 
 exports.debug = false;
 
@@ -22,6 +22,8 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
     var emittedModule = false;
     function visit(parentPath, name, def) {
+      var path = (parentPath ? parentPath + '.' : '') + name;
+
       if (typeof def == 'string' && def.indexOf('exports.') === 0) {
         // alias to other export
         // TODO(sqs): handle this case
@@ -29,7 +31,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
       if (typeof def == 'string') {
         def = {
-          '!node': getDefinitionNode(server, file, (parentPath ? parentPath + '.' : '') + name),
+          '!node': getDefinitionNode(server, file, path),
           '!type': def,
         };
       }
@@ -45,9 +47,14 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       var id = (parentPath ? (parentPath + '/') : '') + nameParts.join('/');
       id = id.replace('exports/', 'exports.');
       var symbol;
+
+      if (!def['!type']) def['!type'] = getType(server, file, path);
+      if (!def['!node']) def['!node'] = getDefinitionNode(server, file, path);
+
       if (def['!type']) {
         if (!parentPath && name == 'exports') {
           // node.js module.exports reassigned to a function.
+          if (!def['!node']) def['!node'] = file.ast;
           symbol = {
             id: file.name,
             kind: def['!type'].indexOf('fn(') !== -1 ? 'func' : 'module',
@@ -56,7 +63,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
             // consider the module to be not exported if the filename starts with "_" (e.g.,
             // github.com/joyent/node lib/_*.js)
-            exported: path.basename(file.name).indexOf('_') == -1,
+            exported: path_.basename(file.name).indexOf('_') == -1,
             obj: {typeExpr: def['!type']},
           };
           emittedModule = true;
@@ -88,7 +95,7 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       }
 
       if (symbol && def['!node']) {
-        var refs = getRefs(server, file, (parentPath ? parentPath + '.' : '') + name, def['!node']);
+        var refs = getRefs(server, file, path, def['!node']);
         refs.forEach(function(ref) {
           setExportedSymbol(ref, symbol.id);
         });
@@ -96,11 +103,13 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
 
       if (symbol && def['!node']) {
         setExportedSymbol(def['!node'], symbol.id);
-        var nameNodes = defnode.findNameNodes(file.ast, def['!node'].start, def['!node'].end);
-        nameNodes.forEach(function(nameNode) {
-          setExportedSymbol(nameNode, symbol.id);
-        });
-        if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
+        if (def['!node']._id != '/Program') {
+          var nameNodes = defnode.findNameNodes(file.ast, def['!node'].start, def['!node'].end);
+          nameNodes.forEach(function(nameNode) {
+            setExportedSymbol(nameNode, symbol.id);
+          });
+          if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
+        }
       }
 
       if (symbol) {
@@ -164,22 +173,29 @@ function getRefs(server, file, path, node) {
   return refs;
 }
 
+function getType(server, file, path) {
+  var me = getPath(server, file, path);
+  if (me && me.getType()) {
+    return me.getType().toString(2);
+  }
+}
+
 function getDefinitionNode(server, file, path) {
-  var nameNode = getOriginNameNode(server, file, path);
-  if (nameNode) {
+  var me = getPath(server, file, path);
+  if (me && me.originNode) {
+    var nameNode = me.originNode;
     return defnode.findDefinitionNode(file.ast, nameNode.start, nameNode.end);
   }
 }
 
-function getOriginNameNode(server, file, path) {
-  var originNode;
+function getPath(server, file, path) {
+  var me;
   infer.withContext(server.cx, function() {
     var parts = path.split('.');
     var parentPath = parts.slice(0, parts.length - 1).join('.');
     var lastPart = parts[parts.length - 1];
     var p = parentPath ? infer.def.parsePath(parentPath) : server.cx.topScope;
-    var me = p.getProp(lastPart);
-    originNode = me.originNode;
+    me = p.getProp(lastPart);
   });
-  return originNode;
+  return me;
 }
