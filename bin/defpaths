@@ -92,9 +92,9 @@ if (!origins.length) usage(1);
 server.flush(function(err) {
   if (err) throw err;
   if (plugins.node) server._node.modules[origins[0]].propagate(server.cx.topScope.defProp('exports'));
-  scopevisitor.inspect(origins, server.cx.topScope, function(path, av, local) {
+  scopevisitor.inspect(origins, server.cx.topScope, function(path, av, local, alias) {
     var typ = av.getType(false);
-    console.log(padRight(path, 50), padRight(local ? '(local)' : '', 10), typ ? typ.toString(1) : '');
+    console.log(padRight(path, 50), padRight(local ? '(local)' : '', 10), padRight(typ ? typ.toString(1) : '', 25), alias ? ' -->' + alias : '');
   });
 });
 
