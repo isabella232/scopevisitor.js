@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // adapted from tern/bin/condense
 
-var tern = require('tern'), scopevisitor = require('../scopevisitor');
+var tern_support = require('../tern_support'), scopevisitor = require('../scopevisitor');
 var path = require('path'), fs = require('fs');
 require('tern/plugin/doc_comment');
 
@@ -12,47 +12,18 @@ function usage(exit) {
   if (exit != null) process.exit(exit);
 }
 
-function findFile(file, where, ext) {
-  if (file.slice(file.length - ext.length) != ext) file += ext;
-  var local = path.resolve(localDir, file);
-  if (fs.existsSync(local)) return local;
-  var our = path.resolve(path.resolve(ternDir, where), file);
-  if (fs.existsSync(our)) return our;
-}
-
 var defs = [], plugins = {doc_comment: {}}, files = [], name;
-
-function loadDef(name) {
-  var found = findFile(name, 'defs', '.json');
-  if (!found) {
-    console.error('Could not find def file ' + name);
-    process.exit(1);
-  }
-  defs.push(JSON.parse(fs.readFileSync(found, 'utf8')));
-}
-
-loadDef('ecma5');
-
-function loadPlugin(name, val) {
-  var found = findFile(name, 'plugin', '.js');
-  if (!found) {
-    console.error('Could not find plugin ' + name);
-    process.exit(1);
-  }
-  require(found);
-  plugins[path.basename(name, '.js')] = val;
-}
 
 for (var i = 2, len = process.argv.length; i < len; ++i) {
   var cur = process.argv[i];
   if (cur == '--plugin' && i < len - 1) {
     var plugin = process.argv[++i], eq = plugin.indexOf('=');
     if (eq > -1)
-      loadPlugin(plugin.slice(0, eq), JSON.parse(plugin.slice(eq + 1)));
+      tern_support.loadPlugin(plugins, plugin.slice(0, eq), JSON.parse(plugin.slice(eq + 1)));
     else
-      loadPlugin(plugin, {});
+      tern_support.loadPlugin(plugins, plugin, {});
   } else if (cur == '--def' && i < len - 1) {
-    loadDef(process.argv[++i]);
+    tern_support.loadDef(defs, process.argv[++i]);
   } else if (cur == '--name' && i < len - 1) {
     name = process.argv[++i];
   } else if (cur.charAt(0) == '-') {
@@ -62,13 +33,7 @@ for (var i = 2, len = process.argv.length; i < len; ++i) {
   }
 }
 
-var server = new tern.Server({
-  getFile: function(file) { return fs.readFileSync(path.resolve(localDir, file), 'utf8'); },
-  defs: defs,
-  plugins: plugins,
-  debug: true,
-  projectDir: localDir
-});
+var server = tern_support.newServer(defs, plugins);
 
 var origins = [];
 for (var i = 0; i < files.length; ++i) {

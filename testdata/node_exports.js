@@ -1,11 +1,11 @@
-// This file isn't tested directly yet, because the test runner doesn't start a tern server (which
-// is the only way to load tern's node plugin). However, you can see the defpaths output by running:
-//   bin/defpaths testdata/node_exports.js
-exports.A = function(p) {
+exports.A/*DEF:exports.A*/ = function(p/*DEF:exports.A.p:local*/) {
 };
 
-exports.B = B;
+exports.B/*DEF:exports.B*/ = B;
 
-function B(p) {
-  exports.C = 3;
+function B(p/*DEF:exports.B.p:local*/) {
+  exports.C/*DEF:exports.C*/ = 3;
 }
+/*NOPATH:/^B\./*/
+
+module.exports.D/*DEF:exports.D::exports.A*/ = exports.A;
