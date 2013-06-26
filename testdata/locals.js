@@ -8,6 +8,7 @@ function X(p/*DEF:X.p:local*/, q/*DEF:X.q:local*/) {
   }
   X.p/*DEF:X.p:nonlocal*/ = 1;
   X2.p/*DEF:X.X2.p:local*/ = 1;
+  var X4/*DEF:X.X4:local:X.X3*/ = X3;
 }
 
 var Y = function(p/*DEF:Y.p:local*/, q/*DEF:Y.q:local*/) {
@@ -20,4 +21,10 @@ var Y = function(p/*DEF:Y.p:local*/, q/*DEF:Y.q:local*/) {
   }
   Y.p/*DEF:Y.p:nonlocal*/ = 1;
   Y2.p/*DEF:Y.Y2.p:local*/ = 1;
+  var Y4/*DEF:Y.Y4:local:Y.Y3*/ = Y3;
 }
+
+var YY/*DEF:YY:nonlocal:Y*/ = Y;
+YY.yy/*DEF:Y.yy:nonlocal*/ = 1;
+
+/*NOPATH:/^YY\./*/

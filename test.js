@@ -6,7 +6,7 @@ var astannotate = require('astannotate'),
     should = require('should');
 
 describe('inspect', function() {
-  ['simple.js', 'proto.js', 'external.js', 'object.js', 'circular.js', 'dedupe.js', 'locals.js'].forEach(function(filename) {
+  ['simple.js', 'proto.js', 'external.js', 'object.js', 'circular.js', 'dedupe.js', 'locals.js', 'aliases.js', 'aliases_external.js'].forEach(function(filename) {
     it(filename, function(done) {
       var file = fs.readFile(path_.join('testdata', filename), 'utf8', function(err, text) {
         should.ifError(err);
@@ -18,11 +18,17 @@ describe('inspect', function() {
         infer.withContext(cx, function() {
           infer.analyze(ast, filename);
         });
-        var locals = {}, nonlocals = {};
-        scopevisitor.inspect(filename, cx.topScope, function(path, prop, local) {
+        var aliases = {local: {}, nonlocal: {}}, locals = {}, nonlocals = {};
+        scopevisitor.inspect(filename, cx.topScope, function(path, prop, local, alias) {
           (local ? locals : nonlocals)[path] = prop;
+          if (alias) aliases[local ? 'local' : 'nonlocal'][path] = alias;
         });
 
+        // Parse inline directives of the form:
+        // /*DEF:<path>:<local>:<alias>*/
+        // where <path> is the def's path, <local> is either 'local' or 'nonlocal' (without quotes),
+        // and <alias> is the path of the destination def for this alias def. Options <local> and
+        // <alias> are optional.
         var visitor = astannotate.nodeVisitor('DEF', function(type) { return type == 'Identifier' || type == 'Literal'; }, function(node, info) {
           info = info.split(':');
           var path = info[0];
@@ -31,6 +37,14 @@ describe('inspect', function() {
           should.exist(defs[path], 'expected ' + kind + ' path ' + path + ' to be emitted\n' + kind + 's:\n  ' + Object.keys(defs).join('\n  '));
           should.exist(defs[path].originNode, 'expected ' + kind + ' path ' + path + ' to have non-null originNode');
           defs[path].originNode.should.equal(node);
+
+          var alias = info[2];
+          if (alias) {
+            should.exist(aliases[kind][path], 'expected ' + kind + ' path ' + path + ' to be an alias');
+            aliases[kind][path].should.eql(alias);
+          } else {
+            should.not.exist(aliases[kind][path], 'expected ' + kind + ' path ' + path + ' to not be an alias, but it aliases ' + aliases[kind][path]);
+          }
         });
         visitor(text, ast);
 

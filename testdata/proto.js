@@ -1,14 +1,14 @@
 // adapted from tern/test/cases/proto.js
 
-function Foo/*PATH:Foo*/(x) {
-  this.x/*PATH:z.x*/ = x;
-  this.y/*PATH:z.y*/ = [1];
+function Foo/*DEF:Foo*/(x) {
+  this.x/*DEF:z.x*/ = x;
+  this.y/*DEF:z.y*/ = [1];
 }
 Foo;
 
-Foo.prototype/*PATH:Foo.prototype*/ = {
-  makeString/*PATH:Foo.prototype.makeString*/: function() { return "hi"; },
-  bar/*PATH:Foo.prototype.bar*/: 13
+Foo.prototype/*DEF:Foo.prototype*/ = {
+  makeString/*DEF:Foo.prototype.makeString*/: function() { return "hi"; },
+  bar/*DEF:Foo.prototype.bar*/: 13
 };
 
-var z/*PATH:z*/ = new Foo(true);
+var z/*DEF:z*/ = new Foo(true);

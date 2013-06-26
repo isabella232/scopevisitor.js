@@ -1,8 +1,8 @@
-var a/*PATH:a*/ = 1;
+var a/*DEF:a*/ = 1;
 
-var b/*PATH:b*/ = {};
+var b/*DEF:b*/ = {};
 
-b.c/*PATH:b.c*/ = 2;
+b.c/*DEF:b.c*/ = 2;
 
-b.d/*PATH:b.d*/ = {};
-b.d.e/*PATH:b.d.e*/ = 3;
+b.d/*DEF:b.d*/ = {};
+b.d.e/*DEF:b.d.e*/ = 3;

@@ -1,7 +1,7 @@
 var infer = require('tern/lib/infer');
 
-// inspect calls c(path, prop) for each property in scope and its children that is defined in one of
-// the specified targetOrigins.
+// inspect calls c(path, prop, local, alias) for each property in scope and its children that is
+// defined in one of the specified targetOrigins.
 exports.inspect = function(targetOrigins, scope, c) {
   if (typeof targetOrigins === 'string') targetOrigins = [targetOrigins];
   var seen = [];
@@ -21,7 +21,25 @@ exports.inspect = function(targetOrigins, scope, c) {
     seen.push(av);
     var typ = av.getType(false);
     var origin = (typ || {}).origin || av.origin;
-    if (isTarget(origin)) {
+    if (typ) {
+      if (typ._path) {
+        // This type has already been traversed.
+        if (isTarget(typ.origin)) {
+          c(path, av, local, typ._path);
+          return;
+        }
+      } else if (isTarget(typ.origin)) {
+        if (!isDistinctInstance(typ)) {
+          typ._path = path;
+        }
+      } else if (isTarget(av.origin)) {
+        if (typ.origin) {
+          c(path, av, local, typ.origin + '/' + typ.name);
+          return;
+        }
+      }
+    }
+    if (isTarget(av.origin)) {
       c(path, av, local);
     }
     if (typ) {
@@ -40,3 +58,7 @@ exports.inspect = function(targetOrigins, scope, c) {
     return targetOrigins.indexOf(orig) !== -1;
   }
 };
+
+function isDistinctInstance(o) {
+  return o.proto && o.proto.hasCtor && !o.hasCtor && o.proto.hasCtor._path;
+}

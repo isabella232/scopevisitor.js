@@ -1,9 +1,9 @@
-var d/*PATH:d*/ = {
-  e/*PATH:d.e*//*PATH:a.b.c.e*/: 5
+var d/*DEF:d*/ = {
+  e/*DEF:d.e*/: 5
 }
 
-var a/*PATH:a*/ = {
-  b/*PATH:a.b*/: {
-    'c'/*PATH:a.b.c*/: d
+var a/*DEF:a*/ = {
+  b/*DEF:a.b*/: {
+    'c'/*DEF:a.b.c::d*/: d
   },
 };
