@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+var infer = require('tern/lib/infer'),
+    scopevisitor = require('../scopevisitor'),
+    fs = require('fs');
+
+var file = process.argv[2];
+if (!file) {
+  console.error('error: no file specified\n');
+  console.error('usage:', process.argv[0], process.argv[1], '<file>');
+  process.exit(1);
+}
+
+fs.readFile(file, 'utf8', function(err, text) {
+  if (err) {
+    console.error('error opening file:', err);
+    process.exit(1);
+  }
+  var ast = infer.parse(text);
+  var cx = new infer.Context();
+  infer.withContext(cx, function() {
+    infer.analyze(ast, file);
+  });
+  scopevisitor.inspect(file, cx.topScope, function(path) {
+    console.log(path);
+  });
+});
