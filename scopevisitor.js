@@ -12,21 +12,24 @@ exports.inspect = function(targetOrigins, scope, c) {
       throw new Error('scope must be instanceof infer.Scope');
     var pathPrefix = path ? path + '.' : '';
     for (var v in scope.props) {
-      if (isTarget(scope.props[v].origin)) visitAVal(scope.props[v], c, pathPrefix + v, local);
+      visitAVal(scope.props[v], c, pathPrefix + v, local);
     }
   }
 
   function visitAVal(av, c, path, local) {
     if (seen.indexOf(av) !== -1) return;
     seen.push(av);
-    c(path, av, local);
     var typ = av.getType(false);
-    if (typ && isTarget(typ.origin)) {
+    var origin = (typ || {}).origin || av.origin;
+    if (isTarget(origin)) {
+      c(path, av, local);
+    }
+    if (typ) {
       typ.forAllProps(function(prop, pv) {
         if (isTarget(pv.origin))
           visitAVal(pv, c, path + '.' + prop, local);
       });
-      if (typ instanceof infer.Fn) {
+      if (isTarget(origin) && typ instanceof infer.Fn && typ.originNode) {
         visitScope(typ.originNode.body.scope, c, path, true);
       }
     }
