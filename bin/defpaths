@@ -1,27 +1,98 @@
 #!/usr/bin/env node
+// adapted from tern/bin/condense
 
-var infer = require('tern/lib/infer'),
-    scopevisitor = require('../scopevisitor'),
-    fs = require('fs');
+var tern = require('tern'), condense = require('tern/lib/condense'), scopevisitor = require('../scopevisitor');
+var path = require('path'), fs = require('fs');
+require('tern/plugin/doc_comment');
 
-var file = process.argv[2];
-if (!file) {
-  console.error('error: no file specified\n');
-  console.error('usage:', process.argv[0], process.argv[1], '<file>');
-  process.exit(1);
+var localDir = process.cwd(), ternDir = path.resolve(__dirname, '../node_modules/tern');
+var spans = true;
+
+function usage(exit) {
+  console.error('usage: ' + process.argv[1] + ' [--name name] [--plugin name]* [--def name]* [+extrafile.js]* [file.js]+');
+  if (exit != null) process.exit(exit);
 }
 
-fs.readFile(file, 'utf8', function(err, text) {
-  if (err) {
-    console.error('error opening file:', err);
+function findFile(file, where, ext) {
+  if (file.slice(file.length - ext.length) != ext) file += ext;
+  var local = path.resolve(localDir, file);
+  if (fs.existsSync(local)) return local;
+  var our = path.resolve(path.resolve(ternDir, where), file);
+  if (fs.existsSync(our)) return our;
+}
+
+var defs = [], plugins = {doc_comment: {}}, files = [], name;
+
+function loadDef(name) {
+  var found = findFile(name, 'defs', '.json');
+  if (!found) {
+    console.error('Could not find def file ' + name);
     process.exit(1);
   }
-  var ast = infer.parse(text);
-  var cx = new infer.Context();
-  infer.withContext(cx, function() {
-    infer.analyze(ast, file);
-  });
-  scopevisitor.inspect(file, cx.topScope, function(path, av, local) {
+  defs.push(JSON.parse(fs.readFileSync(found, 'utf8')));
+}
+
+loadDef('ecma5');
+
+function loadPlugin(name, val) {
+  var found = findFile(name, 'plugin', '.js');
+  if (!found) {
+    console.error('Could not find plugin ' + name);
+    process.exit(1);
+  }
+  require(found);
+  plugins[path.basename(name, '.js')] = val;
+}
+
+for (var i = 2, len = process.argv.length; i < len; ++i) {
+  var cur = process.argv[i];
+  if (cur == '--plugin' && i < len - 1) {
+    var plugin = process.argv[++i], eq = plugin.indexOf('=');
+    if (eq > -1)
+      loadPlugin(plugin.slice(0, eq), JSON.parse(plugin.slice(eq + 1)));
+    else
+      loadPlugin(plugin, {});
+  } else if (cur == '--def' && i < len - 1) {
+    loadDef(process.argv[++i]);
+  } else if (cur == '--name' && i < len - 1) {
+    name = process.argv[++i];
+  } else if (cur.charAt(0) == '-') {
+    usage(1);
+  } else {
+    files.push(cur);
+  }
+}
+
+var server = new tern.Server({
+  getFile: function(file) { return fs.readFileSync(path.resolve(localDir, file), 'utf8'); },
+  defs: defs,
+  plugins: plugins,
+  debug: true,
+  projectDir: localDir
+});
+
+var origins = [];
+for (var i = 0; i < files.length; ++i) {
+  var file = files[i];
+  if (file.charAt(0) == '+') {
+    file = file.slice(1);
+  } else {
+    origins.push(file);
+    if (!name) name = file;
+  }
+  if (!fs.existsSync(file)) {
+    console.error('File ' + file + ' does not exist');
+    process.exit(1);
+  }
+  server.addFile(file, fs.readFileSync(file, 'utf8'));
+}
+
+if (!origins.length) usage(1);
+
+server.flush(function(err) {
+  if (err) throw err;
+  if (plugins.node) server._node.modules[origins[0]].propagate(server.cx.topScope.defProp('exports'));
+  scopevisitor.inspect(origins, server.cx.topScope, function(path, av, local) {
     var typ = av.getType(false);
     console.log(padRight(path, 50), padRight(local ? '(local)' : '', 10), typ ? typ.toString(1) : '');
   });
