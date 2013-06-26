@@ -21,7 +21,7 @@ fs.readFile(file, 'utf8', function(err, text) {
   infer.withContext(cx, function() {
     infer.analyze(ast, file);
   });
-  scopevisitor.inspect(file, cx.topScope, function(path) {
-    console.log(path);
+  scopevisitor.inspect(file, cx.topScope, function(path, av, local) {
+    console.log(path, local ? '(local)' : '');
   });
 });

@@ -4,24 +4,31 @@ var infer = require('tern/lib/infer');
 // the specified targetOrigins.
 exports.inspect = function(targetOrigins, scope, c) {
   if (typeof targetOrigins === 'string') targetOrigins = [targetOrigins];
-  if (!(scope instanceof infer.Scope))
-    throw new Error('scope must be instanceof infer.Scope');
-
   var seen = [];
-  for (var v in scope.props) {
-    if (isTarget(scope.props[v].origin)) visit(scope.props[v], c, v);
+  visitScope(scope, c);
+
+  function visitScope(scope, c, path, local) {
+    if (!(scope instanceof infer.Scope))
+      throw new Error('scope must be instanceof infer.Scope');
+    var pathPrefix = path ? path + '.' : '';
+    for (var v in scope.props) {
+      if (isTarget(scope.props[v].origin)) visitAVal(scope.props[v], c, pathPrefix + v, local);
+    }
   }
 
-  function visit(av, c, path) {
+  function visitAVal(av, c, path, local) {
     if (seen.indexOf(av) !== -1) return;
     seen.push(av);
-    c(path, av);
+    c(path, av, local);
     var typ = av.getType(false);
-    if (typ) {
-      typ.forAllProps(function(prop, pv, local) {
+    if (typ && isTarget(typ.origin)) {
+      typ.forAllProps(function(prop, pv) {
         if (isTarget(pv.origin))
-          visit(pv, c, path + '.' + prop);
+          visitAVal(pv, c, path + '.' + prop, local);
       });
+      if (typ instanceof infer.Fn) {
+        visitScope(typ.originNode.body.scope, c, path, true);
+      }
     }
     seen.pop();
   }
