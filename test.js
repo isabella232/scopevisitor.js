@@ -17,6 +17,9 @@ var tests = [
   {path: 'aliases.js', plugins: []},
   {path: 'aliases_external.js', plugins: []},
   {path: 'node_exports.js', plugins: ['node']},
+  {path: 'node_exports_reassign.js', plugins: ['node']},
+  {path: 'node_exports_reassign2.js', plugins: ['node']},
+  {path: 'node_exports_reassign3.js', plugins: ['node']},
 ];
 
 describe('inspect', function() {
@@ -44,13 +47,13 @@ describe('inspect', function() {
           // where <path> is the def's path, <local> is either 'local' or 'nonlocal' (without quotes),
           // and <alias> is the path of the destination def for this alias def. Options <local> and
           // <alias> are optional.
-          var visitor = astannotate.nodeVisitor('DEF', function(type) { return type == 'Identifier' || type == 'Literal'; }, function(node, info) {
+          var visitor = astannotate.nodeVisitor('DEF', function(type) { return type == 'Identifier' || type == 'Literal' || type == 'FunctionExpression'; }, function(node, info) {
             info = info.split(':');
             var path = info[0];
             var kind = info[1] || 'nonlocal';
             var defs = ({nonlocal: nonlocals, local: locals})[kind];
             should.exist(defs[path], 'expected ' + kind + ' path ' + path + ' to be emitted\n' + kind + 's:\n  ' + Object.keys(defs).join('\n  '));
-            should.exist(defs[path].originNode, 'expected ' + kind + ' path ' + path + ' to have non-null originNode');
+            should.exist(defs[path].originNode, 'expected ' + kind + ' path ' + path + ' to have non-null originNode\nFull def:\n' + require('util').inspect(defs[path], null, 2));
             defs[path].originNode.should.equal(node);
 
             var alias = info[2];

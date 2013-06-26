@@ -39,7 +39,18 @@ exports.inspect = function(targetOrigins, scope, c) {
         }
       }
     }
-    if (isTarget(av.origin)) {
+
+    // Hack to get the originNode of `exports` when using the node plugin.
+    if (path == 'exports' && !av.originNode) {
+      // Make sure we're using the node plugin.
+      var mType = scope.getProp('module').getType();
+      if (mType && mType.origin == 'node') {
+        av.originNode = av.getType(false).originNode;
+        if (av.originNode && av.originNode.type == 'FunctionDeclaration') av.originNode = av.originNode.id;
+      }
+    }
+
+    if (isTarget(origin)) {
       c(path, av, local);
     }
     if (typ) {
