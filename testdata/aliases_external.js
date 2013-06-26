@@ -10,7 +10,6 @@ var d1/*DEF:d1::ecma5/Date.now*/ = Date.now;
 
 String.b/*DEF2:String.b*/ = 1;
 
-// // TODO(sqs): check that when we create instances of an external type, they are not aliases
-// var o1/*DEF2:o1*/ = new Object(), o2/*DEF2:o2*/ = new Object();
-// o1.a/*DEF2:o1.a*/ = 1;
-// o2.a/*DEF2:o2.a*/ = 1;
+var o1/*DEF2:o1*/ = new Object(), o2/*DEF2:o2*/ = new Object();
+o1.a/*DEF2:o1.a*/ = 1;
+o2.a/*DEF2:o2.a*/ = 1;
