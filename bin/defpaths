@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // adapted from tern/bin/condense
 
-var tern = require('tern'), condense = require('tern/lib/condense'), scopevisitor = require('../scopevisitor');
+var tern = require('tern'), scopevisitor = require('../scopevisitor');
 var path = require('path'), fs = require('fs');
 require('tern/plugin/doc_comment');
 
