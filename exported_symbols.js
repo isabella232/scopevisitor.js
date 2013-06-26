@@ -25,11 +25,6 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
       var path = (parentPath ? parentPath + '.' : '') + name;
       if (path.indexOf('<i>') !== -1) return;
 
-      if (typeof def == 'string' && def.indexOf('exports.') === 0) {
-        // alias to other export
-        // TODO(sqs): handle this case
-        return;
-      }
       if (typeof def == 'string') {
         def = {
           '!node': getDefinitionNode(server, file, path),
@@ -105,11 +100,14 @@ tern.defineQueryType('sourcegraph:exported_symbols', {
         setExportedSymbol(def['!node'], symbol.id);
         if (def['!node']._id != '/Program') {
           var nameNodes = defnode.findNameNodes(file.ast, def['!node'].start, def['!node'].end);
-          if (nameNodes) {
-            nameNodes.forEach(function(nameNode) {
+          if (nameNodes && nameNodes.length) {
+            // a def can have multiple name nodes; we only want to use the name nodes that are for
+            // this symbol (e.g., in `exports.a = exports.b = foo`, foo has a and b name nodes)
+            var matchingNameNodes = nameNodes.filter(function(nn) { return defnode.identOrLiteralString(nn) === symbol.name; });
+            matchingNameNodes.forEach(function(nameNode) {
               setExportedSymbol(nameNode, symbol.id);
             });
-            if (nameNodes[0]) symbol.declId = nameNodes[0]._id;
+            symbol.declId = matchingNameNodes[0] ? matchingNameNodes[0]._id : nameNodes[0]._id;
           }
         }
       }

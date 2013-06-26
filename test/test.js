@@ -70,7 +70,7 @@ function check(file, src, ast, r) {
 }
 
 var testCases = [
-  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js', 'node_exports.js', 'reassign_module_exports1.js', 'reassign_module_exports2.js', 'reassign_module_exports3.js', 'conditional_node_export.js', 'complex_node_exports.js', 'exports_and_locals.js']},
+  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js', 'node_exports.js', 'reassign_module_exports1.js', 'reassign_module_exports2.js', 'reassign_module_exports3.js', 'conditional_node_export.js', 'complex_node_exports.js', 'exports_and_locals.js', 'chained_exports.js']},
 ];
 
 testCases.forEach(function(testCase) {

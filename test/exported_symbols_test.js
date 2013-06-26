@@ -69,58 +69,61 @@ describe('Symbols', function() {
   it('returns an array of exported symbols', function(done) {
     requestSymbols('module.exports.x = function(){};', function(res) {
       withoutModule(res.symbols).should.eql(
-          [
-            {
-              id: 'a.js/exports.x',
-              kind: 'func',
-              name: 'x',
-              declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-              decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/FunctionExpression',
-              exported: true,
-              obj: {typeExpr: 'fn()'},
-            },
-          ]
+        [
+          {
+            id: 'a.js/exports.x',
+            kind: 'func',
+            name: 'x',
+            declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
+            decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/FunctionExpression',
+            exported: true,
+            obj: {typeExpr: 'fn()'},
+          },
+        ]
       );
       done();
     });
   });
-  /// it('emits non-func symbols', function(done) {
-  ///   requestSymbols('//foo\nmodule.exports.x = 9;\nmodule.exports.y=[1];// bar\nmodule.exports.z=exports.x;', function(res) {
-  ///     withoutModule(res.symbols).should.eql(
-  ///         [
-  ///           {
-  ///             id: 'a.js/exports.x',
-  ///             kind: 'var',
-  ///             name: 'x',
-  ///             declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-  ///             decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression',
-  ///             exported: true,
-  ///             obj: {typeExpr: 'number'},
-  ///           },
-  ///           {
-  ///             id: 'a.js/exports.y',
-  ///             kind: 'var',
-  ///             name: 'y',
-  ///             declId: '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-  ///             decl: '/Program/body/1/ExpressionStatement/expression/AssignmentExpression',
-  ///             exported: true,
-  ///             obj: {typeExpr: '[number]'},
-  ///           },
-  ///
-  ///           {
-  ///             id: 'a.js/exports.z',
-  ///             kind: 'var',
-  ///             name: 'z',
-  ///             declId: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-  ///             decl: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression',
-  ///             exported: true,
-  ///             obj: {typeExpr: 'number'},
-  ///           },
-  ///         ]
-  ///     );
-  ///     done();
-  ///   });
-  /// });
+  it('emits non-func symbols', function(done) {
+    requestSymbols('//foo\nmodule.exports.x = 9;\nmodule.exports.y=[1];// bar\nmodule.exports.z=exports.x;', function(res) {
+      withoutModule(res.symbols).should.eql([
+        {
+          "id": "a.js/exports.x",
+          "name": "x",
+          "decl": "/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Literal",
+          "exported": true,
+          "obj": {
+            "typeExpr": "number"
+          },
+          "kind": "var",
+          "declId": "/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier"
+        },
+        {
+          "id": "a.js/exports.y",
+          "name": "y",
+          "decl": "/Program/body/1/ExpressionStatement/expression/AssignmentExpression/right/ArrayExpression",
+          "exported": true,
+          "obj": {
+            "typeExpr": "[number]"
+          },
+          "kind": "var",
+          "declId": "/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier"
+        },
+        {
+          "id": "a.js/exports.z",
+          "name": "z",
+          "decl": "/Program/body/2/ExpressionStatement/expression/AssignmentExpression/right/MemberExpression",
+          "exported": true,
+          "obj": {
+            "typeExpr": "number"
+          },
+          "kind": "var",
+          "declId": "/Program/body/2/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier"
+        }
+      ]);
+      done();
+    });
+  });
   it('annotates the types of functions', function(done) {
     requestSymbols('module.exports.x = function(a, b) { b*=2; a+="z"; return [a]; };', function(res) {
       var x = getSymbol(res.symbols, 'a.js/exports.x');
@@ -142,7 +145,7 @@ describe('Symbols', function() {
   it('sets the declId and decl to the key/value in an object literal (indirect)', function(done) {
     requestSymbols('var y={z:function(){}};module.exports.x = y.z;', function(res) {
       var x = getSymbol(res.symbols, 'a.js/exports.x');
-      /// should.equal(x.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(x.declId, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:y/init/ObjectExpression/properties/0:z/key/Identifier');
       should.equal(x.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:y/init/ObjectExpression/properties/0:z/value/FunctionExpression');
       done();
     });
@@ -166,7 +169,7 @@ describe('Symbols', function() {
   it('sets the decl to the exported function stmt', function(done) {
     requestSymbols('module.exports.F=f;function f(){}', function(res) {
       var f = getSymbol(res.symbols, 'a.js/exports.F');
-      /// should.equal(f.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(f.declId, '/Program/body/1/FunctionDeclaration:f/id/Identifier');
       should.equal(f.decl, '/Program/body/1/FunctionDeclaration:f');
       done();
     });
@@ -174,7 +177,7 @@ describe('Symbols', function() {
   it('sets the decl to the exported function expr', function(done) {
     requestSymbols('var f = function(){};module.exports.F=f', function(res) {
       var f = getSymbol(res.symbols, 'a.js/exports.F');
-      /// should.equal(f.declId, '/Program/body/1/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(f.declId, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:f/id/Identifier');
       should.equal(f.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:f/init/FunctionExpression');
       done();
     });
@@ -195,27 +198,28 @@ describe('Symbols', function() {
       done();
     });
   });
-  /// it('exports when aliased by local var', function(done) {
-  ///   requestSymbols('var c={};exports.C=c;', function(res) {
-  ///     var m = getSymbol(res.symbols, 'a.js/exports.C');
-  ///     should.equal(m.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/ObjectExpression');
-  ///     done();
-  ///   });
-  /// });
-  /// it('sets the decl to the rightmost value in a chained assignment', function(done) {
-  ///   requestSymbols('module.exports.x = module.exports.y = function() {};', function(res) {
-  ///     var x = getSymbol(res.symbols, 'a.js/exports.x');
-  ///     /// should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
-  ///     should.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/AssignmentExpression/right/FunctionExpression');
-  ///     done();
-  ///   });
-  /// });
-  /// it('sets the decl to the rightmost value in a chained assignment (with indirect)', function(done) {
-  ///   requestSymbols('module.exports.x = module.exports.y = f; function f() {};', function(res) {
-  ///     var x = getSymbol(res.symbols, 'a.js/exports.x');
-  ///     /// should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
-  ///     should.equal(x.decl, '/Program/body/1/FunctionDeclaration:f');
-  ///     done();
-  ///   });
-  /// });
+  it('exports when aliased by local var', function(done) {
+    requestSymbols('var c={};exports.C=c;', function(res) {
+      var m = getSymbol(res.symbols, 'a.js/exports.C');
+      should.equal(m.decl, '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/ObjectExpression');
+      done();
+    });
+  });
+  it('sets the decl to the rightmost value in a chained assignment', function(done) {
+    requestSymbols('module.exports.x = module.exports.y = function() {};', function(res) {
+      var x = getSymbol(res.symbols, 'a.js/exports.x');
+      should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      should.equal(x.decl, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/AssignmentExpression/right/FunctionExpression');
+      done();
+    });
+  });
+  it('sets the decl to the rightmost value in a chained assignment (with indirect)', function(done) {
+    requestSymbols('module.exports.x = module.exports.y = f; function f() {};', function(res) {
+      var x = getSymbol(res.symbols, 'a.js/exports.x');
+      should.equal(x.declId, '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier');
+      // FIXME(sqs)
+      /// should.equal(x.decl, '/Program/body/1/FunctionDeclaration:f');
+      done();
+    });
+  });
 });
