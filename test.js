@@ -14,7 +14,7 @@ var tests = [
   {path: 'circular.js', plugins: []},
   {path: 'dedupe.js', plugins: []},
   {path: 'locals.js', plugins: []},
-  {path: 'aliases.js', plugins: []},
+  {path: 'aliases.js', plugins: ['doc_comment']},
   {path: 'aliases_external.js', plugins: []},
   {path: 'node_exports.js', plugins: ['node']},
   {path: 'node_exports_reassign.js', plugins: ['node']},

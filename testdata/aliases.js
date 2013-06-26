@@ -22,3 +22,12 @@ u6 = {};
 
 var u7/*DEF:u7*/ = {a/*DEF:u7.a::u7*/: u7};
 u7.b/*DEF:u7.b::u7*/ = u7;
+
+// TODO(sqs): enable and fix this test
+/**
+ * cf is type annotated
+ *
+ * @param {Function} cf
+ */
+function F(cf/*DEF_DISABLED:F.cf:local*/) {}
+F()
