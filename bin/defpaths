@@ -6,7 +6,6 @@ var path = require('path'), fs = require('fs');
 require('tern/plugin/doc_comment');
 
 var localDir = process.cwd(), ternDir = path.resolve(__dirname, '../node_modules/tern');
-var spans = true;
 
 function usage(exit) {
   console.error('usage: ' + process.argv[1] + ' [--name name] [--plugin name]* [--def name]* [+extrafile.js]* [file.js]+');
