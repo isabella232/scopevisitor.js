@@ -22,6 +22,22 @@ fs.readFile(file, 'utf8', function(err, text) {
     infer.analyze(ast, file);
   });
   scopevisitor.inspect(file, cx.topScope, function(path, av, local) {
-    console.log(path, local ? '(local)' : '');
+    var typ = av.getType(false);
+    console.log(padRight(path, 50), padRight(local ? '(local)' : '', 10), typ ? typ.toString(1) : '');
   });
 });
+
+function padRight(s, n) {
+  if (s.length < n) {
+    s += repeat(' ', n - s.length);
+  }
+  return s;
+}
+
+function repeat(s, n) {
+  var r = '';
+  for (var i = 0; i < n; ++i) {
+    r += s;
+  }
+  return r;
+}
