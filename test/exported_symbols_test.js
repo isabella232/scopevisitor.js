@@ -28,7 +28,7 @@ describe('Symbols', function() {
 
   function withoutModule(symbols) {
     return symbols.filter(function(symbol) {
-      return symbol.kind !== 'module';
+      return symbol.kind !== 'module' && !/.js$/.test(symbol.id);
     });
   }
 
