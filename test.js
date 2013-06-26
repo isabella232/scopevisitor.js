@@ -6,7 +6,7 @@ var astannotate = require('astannotate'),
     should = require('should');
 
 describe('inspect', function() {
-  ['simple.js', 'proto.js', 'external.js', 'object.js', 'circular.js'].forEach(function(filename) {
+  ['simple.js', 'proto.js', 'external.js', 'object.js', 'circular.js', 'dedupe.js'].forEach(function(filename) {
     it(filename, function(done) {
       var file = fs.readFile(path_.join('testdata', filename), 'utf8', function(err, text) {
         should.ifError(err);
