@@ -1,4 +1,3 @@
-// FIXME(sqs)
 var s1/*DEF:s1::ecma5/String*/ = String, s2/*DEF:s2::ecma5/String*/ = String;
 s1.a/*DEF:String.a*/ = 1;
 /*NOPATH:/s1\./*/
