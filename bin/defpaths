@@ -56,11 +56,25 @@ if (!origins.length) usage(1);
 server.flush(function(err) {
   if (err) throw err;
   if (plugins.node) server._node.modules[origins[0]].propagate(server.cx.topScope.defProp('exports'));
+  var out = [];
   scopevisitor.inspect(origins, server.cx.topScope, function(path, av, local, alias) {
+    out.push(arguments);
+  });
+  var maxPathLen = Math.max.apply(null, out.map(function(args) { return args[0].length; }));
+  var maxTypeLen = Math.max.apply(null, out.map(function(args) { var typ = args[1].getType(false); return typ ? typ.toString(1).length : 0; }));
+  var maxAliasLen = Math.max.apply(null, out.map(function(args) { return (args[3] || '').length; }));
+  out.forEach(function(args) {
+    var path = args[0], av = args[1], local = args[2], alias = args[3];
     var typ = av.getType(false);
-    console.log(padRight(path, 50), padRight(local ? '(local)' : '', 10), padRight(typ ? typ.toString(1) : '', 25), alias ? ' -->' + alias : '');
+    console.log(padRight(path, maxPathLen), padRight(local ? '(local)' : '', 8), padRight(typ ? typ.toString(1) : '', maxTypeLen), padRight(alias ? ' -->' + alias : '', maxAliasLen + 4), av.doc ? '// ' + ellide(av.doc, 25) : '');
   });
 });
+
+function ellide(s, n) {
+  if (s.length > n) {
+    return s.slice(0, n) + '...';
+  } else return s;
+}
 
 function padRight(s, n) {
   if (s.length < n) {
