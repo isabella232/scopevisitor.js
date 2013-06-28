@@ -17,6 +17,7 @@ var tests = [
   {path: 'aliases.js', plugins: ['doc_comment']},
   {path: 'aliases_external.js', plugins: []},
   {path: 'node_exports.js', plugins: ['node']},
+  {path: 'node_locals.js', plugins: ['node']},
   {path: 'node_exports_reassign.js', plugins: ['node']},
   {path: 'node_exports_reassign2.js', plugins: ['node']},
   {path: 'node_exports_reassign3.js', plugins: ['node']},
