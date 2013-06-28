@@ -1,12 +1,12 @@
 if (true) {
-  exports.a/*DECLID:'/exports.a'*/ = function(){};
+  exports.a/*DECLID:exports.a*/ = function(){};
 }
 if (exports) {
-  exports.b/*DECLID:'/exports.b'*/ = function(){};
+  exports.b/*DECLID:exports.b*/ = function(){};
 }
 if (typeof exports !== 'undefined') {
-  exports.c/*DECLID:'/exports.c'*/ = function(){};
+  exports.c/*DECLID:exports.c*/ = function(){};
 }
 
-(exports || window).d/*DECLID:'/exports.d'*/ = function(){};
-((module && module.exports) || window).e/*DECLID:'/exports.e'*/ = function(){};
+(exports/*REF:exports*/ || window).d/*DECLID:exports.d*/ = function(){};
+((module/*REF:module,,@node*/ && module.exports/*REF:exports*/) || window).e/*DECLID:exports.e*/ = function(){};

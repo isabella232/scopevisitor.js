@@ -4,7 +4,9 @@ var astannotate = require('astannotate'),
     path = require('path'),
     should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, exported_symbols: true, local_symbols: true});
+var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
+
+var debug = true;
 
 function graph(file, src, test) {
   server.reset();
@@ -12,65 +14,81 @@ function graph(file, src, test) {
   var fileAST = server.files.filter(function(f) { return f.name == file; })[0].ast;
   server.flush(function(err) {
     should.ifError(err);
-    var r = {symbols: [], docs: [], refs: []};
+    var r = {symbols: [], refs: []};
     server.request({
-      query: {type: 'sourcegraph:exported_symbols', file: file}}, function(err, res) {
+      query: {type: 'sourcegraph:symbols', file: file}}, function(err, res) {
         should.ifError(err);
-        r.symbols.push.apply(r.symbols, res.symbols);
-        r.docs.push.apply(r.docs, res.docs);
-      });
-    server.request({
-      query: {type: 'sourcegraph:local_symbols', file: file}}, function(err, res) {
-        should.ifError(err);
-        r.symbols.push.apply(r.symbols, res.symbols);
-        r.docs.push.apply(r.docs, res.docs);
+        r.symbols.push.apply(r.symbols, res);
       });
     server.request({
       query: {type: 'sourcegraph:refs', file: file},
     }, function(err, res) {
       should.ifError(err);
-      r.refs = res.refs;
+      r.refs = res;
       test(fileAST, r);
     });
   });
 }
 
 function check(file, src, ast, r) {
-  function mkDeclVisitor(directive) {
+  function mkDefVisitor(directive) {
     return astannotate.rangeVisitor(directive, null, function(range, x) {
       should.exist(range.node, range.node || ('No AST node found at range ' + JSON.stringify(range)));
       x = eval('(' + x + ')');
-      var sym = r.symbols.filter(function(s) { return s.decl == range.node._id && s.id.indexOf(x._ignoreSymbol) == -1; })[0];
-      should.exist(sym, 'No symbol found with declaration at ' + range.node._id + '\nWant: ' + JSON.stringify(x) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
+      var sym = r.symbols.filter(function(s) { return s.defNode == range.node._id && s.path.indexOf(x._ignoreSymbol) == -1; })[0];
+      should.exist(sym, 'No symbol found with definition at ' + range.node._id + '\nWant: ' + JSON.stringify(x) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
       for (var key in x) if (x.hasOwnProperty(key)) {
         var v = x[key];
-        if (v instanceof RegExp) {
-          sym[key].should.match(v);
-        } else {
-          sym[key].should.include(v);
+        should.exist(sym[key], 'expected symbol to have key ' + JSON.stringify(key) + '; keys are ' + JSON.stringify(Object.keys(sym)));
+        if (sym[key] !== v && debug) {
+          console.log('KEY', key, v, sym);
         }
+        sym[key].should.eql(v);
       }
     });
   }
   // Support nesting (use DECL1 for the first level of nesting).
-  var declVisitor = mkDeclVisitor('DECL'), decl1Visitor = mkDeclVisitor('DECL1');
-  var declIdVisitor = astannotate.nodeVisitor('DECLID', 'Identifier', function(identNode, x) {
-    x = eval('(' + x + ')');
-    var sym = r.symbols.filter(function(s) { return s.declId == identNode._id; })[0];
-    should.exist(sym, 'No symbol found with declId at ' + identNode._id + '\nWant: ' + JSON.stringify(x) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
-    sym.id.should.include(x);
+  var defVisitor = mkDefVisitor('DEF'), def1Visitor = mkDefVisitor('DEF1');
+  var declIdentVisitor = astannotate.nodeVisitor('DECLID', identOrLiteral, function(identNode, info) {
+    info = info.split(',');
+    var symbolPath = info[0], symbolIsLocal = info[1] === 'local';
+    var sym = r.symbols.filter(function(s) { return s.declIdentNode == identNode._id; })[0];
+    should.exist(sym, 'No symbol found with declIdentNode at ' + identNode._id + '\nWant: ' + JSON.stringify(info) + '\nAll symbols:\n' + JSON.stringify(r.symbols, null, 2));
+    sym.path.should.eql(symbolPath);
+    sym.local.should.eql(symbolIsLocal);
   });
-  var refVisitor = astannotate.nodeVisitor('REF', 'Identifier', function(identNode, x) {
-    x = eval('(' + x + ')');
+  var refVisitor = astannotate.nodeVisitor('REF', identOrLiteral, function(identNode, info) {
+    info = info.split(',');
+    var symbolPath = info[0], symbolIsLocal = info[1] === 'local', origin = info[2] || file;
     var ref = r.refs.filter(function(r) { return r.astNode == identNode._id; })[0];
-    should.exist(ref, 'No ref found at AST node ' + identNode._id);
-    ref.symbol.should.include(x);
+    should.exist(ref, 'No ref found at AST node ' + identNode._id + '\nWant: ' + JSON.stringify(info));
+    should.exist(ref.symbol, 'Ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' has no symbol property');
+    ref.symbol.should.eql(symbolPath);
+    should.exist(ref.local, 'Ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' has no local property');
+    should.equal(ref.local, symbolIsLocal, 'Expected ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' to have local=' + symbolIsLocal + ', got ' + ref.local);
+    should.exist(ref.symbolOrigin, 'Ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' has no origin property');
+    should.equal(ref.symbolOrigin, origin, 'Expected ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' to have origin=' + origin + ', got ' + ref.symbolOrigin);
   });
-  astannotate.multi([declVisitor, decl1Visitor, declIdVisitor, refVisitor])(src, ast);
+  astannotate.multi([defVisitor, def1Visitor, declIdentVisitor, refVisitor])(src, ast);
+}
+
+function identOrLiteral(nodeType) {
+  return nodeType === 'Identifier' || nodeType === 'Literal';
 }
 
 var testCases = [
-  {dir: 'simple', files: ['local_vars.js', 'local_funcs.js', 'node_exports.js', 'reassign_module_exports1.js', 'reassign_module_exports2.js', 'reassign_module_exports3.js', 'conditional_node_export.js', 'complex_node_exports.js', 'exports_and_locals.js', 'chained_exports.js']},
+  {dir: 'simple', files: [
+    // 'local_vars.js',
+    // 'local_funcs.js',
+    'node_stdlib.js',
+    'node_exports.js',
+    'reassign_module_exports1.js',
+    'reassign_module_exports2.js',
+    'reassign_module_exports3.js',
+    'conditional_node_export.js',
+    'complex_node_exports.js',
+    'exports_and_locals.js',
+    'chained_exports.js']},
 ];
 
 testCases.forEach(function(testCase) {

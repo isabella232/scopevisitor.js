@@ -9,63 +9,88 @@ tern.defineQueryType('sourcegraph:refs', {
   takesFile: true,
   run: function(server, query, file) {
     if (!server.options.plugins.node) throw new Error('node plugin not loaded');
-    if (!file.ast._sourcegraph_annotatedLocalSymbolDeclIds) throw new Error('AST not yet annotated with local symbol decls: ' + file.name);
-    if (!file.ast._sourcegraph_annotatedExportedSymbolDeclIds) throw new Error('AST not yet annotated with exported symbol decls: ' + file.name);
+    if (!file.ast._sourcegraph_symbols) throw new Error('AST not yet annotated with local symbol decls: ' + file.name);
 
-    var res = {refs: []};
+    var refs = [];
     idents.inspect(file.ast, function(ident) {
-      var def = util.getDefinition(server, file, ident);
-      var type = util.getType(server, file, ident);
-
-      if (Object.keys(def) == 0) {
-        // console.error('No def found for ident "' + ident.name + '" at file ' + file.name + ':' + ident.start + '-' + ident.end);
-        return;
-      }
-
       var ref = {astNode: ident._id, kind: 'ident'};
-      if (type.name == 'exports' || type.name == 'module.exports') {
-        // external module ref
-        // ex: "m" in "var m = require('foo')"
-        // tern doesn't set the type.origin of m to "foo" in all cases, so we have to manually
-        // resolve the ident to the module
-        var mod = type.origin || getModuleRef(server, file, def.start, def.end);
-        if (!mod) {
-          if (exports.debug) console.error('Failed to resolve module ref at file', file.name + ':' + ident.start + '-' + ident.end, 'at identifier type', type, 'definition', def);
-          return;
-        }
-        ref.symbol = mod;
-        ref.symbolOrigin = 'external';
-      } else if ((!type.origin || type.origin == file.name) && def.file == file.name) {
-        var declId = getDeclIdNode(file, def.start, def.end);
-        if (!declId) return;
-        ref.symbol = declId._declSymbol
-        ref.symbolOrigin = 'local';
+      if (ident._declSymbol) {
+        // is ident of declaration/definition
+        setSymbol(ref, ident._declSymbol);
       } else {
-        if (!def.origin) throw new Error('No origin');
-        // external ref
-        if (storedDefOrigins.indexOf(type.origin) != -1) {
-          // ref to stored def (not to external file)
-          if (!type.name) return;
-          if (type.name == 'require') type.name = 'module.require';
-          ref.symbol = '@' + type.origin + '/' + type.name;
-          if (type.name.indexOf('.') == -1) {
-            // predef module ref
-            ref.symbol += '.js';
+        var expr = tern.findQueryExpr(file, {start: ident.start, end: ident.end})
+        if (expr) {
+          var av = infer.expressionType(expr);
+          if (av.originNode && av.originNode._declSymbol) {
+            setSymbol(ref, av.originNode._declSymbol);
+          } else if (isNodeModule(av)) {
+            setSymbol(ref, {path: 'module', origin: '@node'});
+          } else if (isNodeExports(av)) {
+            setSymbol(ref, {path: 'exports', origin: file.name});
           } else {
-            // predef exported symbol ref
-            ref.symbol = ref.symbol.replace('.', '.js/exports.');
+            var typ = av.getType(false);
+            if (typ) {
+              if (typ.originNode && typ.originNode._declSymbol) {
+                setSymbol(ref, typ.originNode._declSymbol);
+              } else if (storedDefOrigins.indexOf(typ.origin) > -1) {
+                if (typ.origin === 'node') {
+                  setNodeStdlibSymbol(ref, typ);
+                } else {
+                  setSymbol(ref, {path: typ.name, origin: '@' + typ.origin});
+                }
+              } else {
+                // console.log('FOO', ident.name, typ.name, typ.origin);
+              }
+            } else {
+              // console.log('no type for expr at', ident.name, ident.start, ident.end, '\n', av, '\n', util.getType(server, file, ident));
+            }
           }
-          ref.symbolOrigin = 'predef';
         } else {
-          ref.symbol = def.origin + '/exports.' + ident.name;
-          ref.symbolOrigin = 'external';
+          // console.log('no expr at ', ident.name, ident.start, ident.end, util.getType(server, file, ident));
         }
       }
-      res.refs.push(ref);
+
+      if (ref.symbol) refs.push(ref);
     });
-    return res;
+    return refs;
   }
 });
+
+function setSymbol(ref, sym) {
+  // FIXME(sqs): hacky workaround for test 'omits <top> symbol (e.g., global this)'
+  if (sym.path === '<top>') return;
+  ref.symbol = sym.path;
+  ref.local = !!sym.local;
+  ref.symbolOrigin = sym.origin;
+}
+
+// typ.name is like 'fs.readFileSync'; we want to munge this to origin=@node,
+// nodeStdlibModule=fs, path=exports.readFileSync
+function setNodeStdlibSymbol(ref, typ) {
+  var nameParts = typ.name.split('.');
+  if (typ.name === 'require') nameParts.unshift('module');
+  var path = ['exports'].concat(nameParts.slice(1)).join('.');
+  setSymbol(ref, {path: path, origin: '@node'});
+  ref.nodeStdlibModule = nameParts[0];
+}
+
+function isNodeModule(av) {
+  if (!av.types) return false;
+  for (var i = 0; i < av.types.length; ++i) {
+    var typ = av.types[i];
+    if (typ.name == 'Module') return true;
+  }
+  return false;
+}
+
+function isNodeExports(av) {
+  if (!av.types) return false;
+  for (var i = 0; i < av.types.length; ++i) {
+    var typ = av.types[i];
+    if (typ.name == 'exports') return true;
+  }
+  return false;
+}
 
 // getModuleRef takes a start+end containing an ident whose value is an node.js module's exports
 // (e.g., "var m = require('foo')"), and returns the module's filename.

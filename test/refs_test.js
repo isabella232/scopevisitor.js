@@ -1,17 +1,13 @@
 var should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, exported_symbols: true, local_symbols: true});
+var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
 
 describe('Refs', function() {
   function requestRefs(src, test) {
     server.reset();
     server.addFile('a.js', src);
     server.request({
-      query: {type: 'sourcegraph:exported_symbols', file: 'a.js'}}, function(err) {
-        if (err) throw err;
-      });
-    server.request({
-      query: {type: 'sourcegraph:local_symbols', file: 'a.js'}}, function(err) {
+      query: {type: 'sourcegraph:symbols', file: 'a.js'}}, function(err) {
         if (err) throw err;
       });
     server.request({
@@ -22,138 +18,32 @@ describe('Refs', function() {
     });
   }
 
-  it('returns a ref to an external symbol', function(done) {
-    requestRefs('require("./test/testdata/b").x', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
-            kind: 'ident',
-            symbol: '@node/module.js/exports.require',
-            symbolOrigin: 'predef',
-          },
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x',
-            symbolOrigin: 'external',
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('returns a ref to an external symbol (indirect)', function(done) {
-    requestRefs('var b = require("./test/testdata/b");b;b.x;b.x()', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/id/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:b/init/CallExpression/callee/Identifier',
-            kind: 'ident',
-            symbol: '@node/module.js/exports.require',
-            symbolOrigin: 'predef',
-          },
-          {
-            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/object/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/2/ExpressionStatement/expression/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/b.js/exports.x',
-            symbolOrigin: 'external',
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('returns a ref to an external symbol (indirect, with reassigned module.exports)', function(done) {
-    requestRefs('var c = require("./test/testdata/c");c;c();c.d()', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/id/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/c.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:c/init/CallExpression/callee/Identifier',
-            kind: 'ident',
-            symbol: '@node/module.js/exports.require',
-            symbolOrigin: 'predef',
-          },
-          {
-            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/c.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/2/ExpressionStatement/expression/CallExpression/callee/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/c.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/object/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/c.js',
-            symbolOrigin: 'external',
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/CallExpression/callee/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'test/testdata/c.js/exports.d',
-            symbolOrigin: 'external',
-          }
-        ]
-      );
+  it('omits <top> symbol (e.g., global this)', function(done) {
+    // TODO(sqs): this is actually a bug that deserves more examination
+    requestRefs(';(function(w){}(this))', function(res) {
+      res.should.eql([]);
       done();
     });
   });
   it('returns a ref to a predef symbol', function(done) {
     requestRefs('require("fs").readFile', function(res) {
-      res.refs.should.eql(
+      res.should.eql(
         [
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/object/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require',
-            symbolOrigin: 'predef',
+            symbol: 'exports.require',
+            local: false,
+            symbolOrigin: '@node',
+            nodeStdlibModule: 'module',
           },
           {
             astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
             kind: 'ident',
-            symbol: '@node/fs.js/exports.readFile',
-            symbolOrigin: 'predef',
+            symbol: 'exports.readFile',
+            local: false,
+            symbolOrigin: '@node',
+            nodeStdlibModule: 'fs',
           }
         ]
       );
@@ -162,156 +52,24 @@ describe('Refs', function() {
   });
   it('returns a ref to external module', function(done) {
     requestRefs('var m = require("fs");', function(res) {
-      res.refs.should.eql(
+      res.should.eql(
         [
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/id/Identifier',
             kind: 'ident',
-            symbol: '@node/fs.js',
-            symbolOrigin: 'predef',
+            symbol: 'exports',
+            local: false,
+            symbolOrigin: '@node',
+            nodeStdlibModule: 'fs',
           },
           {
             astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:m/init/CallExpression/callee/Identifier',
             kind: 'ident',
-            symbol: '@node/module.js/exports.require',
-            symbolOrigin: 'predef',
+            symbol: 'exports.require',
+            local: false,
+            symbolOrigin: '@node',
+            nodeStdlibModule: 'module',
           }
-        ]
-      );
-      done();
-    });
-  });
-  it('returns a ref to an exported symbol defined in the same file', function(done) {
-    requestRefs('module.exports.x=function(){};var y = module.exports.x;', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.x',
-            symbolOrigin: 'local',
-          },
-          {
-            astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/id/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/local:y:34',
-            symbolOrigin: 'local',
-          },
-          {
-            astNode: '/Program/body/1/VariableDeclaration/declarations/0/VariableDeclarator:y/init/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.x',
-            symbolOrigin: 'local',
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('returns a ref to reassigned module.exports', function(done) {
-    requestRefs('module.exports = x;function x() {}', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local',
-          },
-          {
-            astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local',
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('returns a ref to a local symbol', function(done) {
-    requestRefs('var x = 7; x;', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/VariableDeclaration/declarations/0/VariableDeclarator:x/id/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/local:x:4',
-            symbolOrigin: 'local',
-          },
-          {
-            astNode: '/Program/body/1/ExpressionStatement/expression/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/local:x:4',
-            symbolOrigin: 'local',
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('doesnt create phantom local refs', function(done) {
-    requestRefs('module.exports=x;function x(){};x.y=z;function z(){}', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/1/FunctionDeclaration:x/id/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/object/Identifier',
-            kind: 'ident',
-            symbol: 'a.js',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.y',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/3/ExpressionStatement/expression/AssignmentExpression/right/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.y',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/4/FunctionDeclaration:z/id/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.y',
-            symbolOrigin: 'local'
-          }
-        ]
-      );
-      done();
-    });
-  });
-  it('doesnt merge funcs and func params', function(done) {
-    requestRefs('module.exports.x=function(y){}', function(res) {
-      res.refs.should.eql(
-        [
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/left/MemberExpression/property/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/exports.x',
-            symbolOrigin: 'local'
-          },
-          {
-            astNode: '/Program/body/0/ExpressionStatement/expression/AssignmentExpression/right/FunctionExpression/params/0/Identifier',
-            kind: 'ident',
-            symbol: 'a.js/local:y:26',
-            symbolOrigin: 'local'
-          },
-
         ]
       );
       done();

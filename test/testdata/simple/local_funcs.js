@@ -1,12 +1,12 @@
-/*DECL*/function a/*DECLID:'local:a:17'*/(
-  /*DECL*/b/*DECL:{id:'local:b:'}*//*DECLID:'local:b:'*/
+/*DEF*/function a/*DECLID:a*/(
+  /*DEF*/b/*DEF:{path:'a.b',local:true}*//*DECLID:a.b,local*/
 ) {
-}/*DECL:{id:'local:a:'}*/
+}/*DEF:{path:'a',local:false}*/
 
-a();/*REF:'local:a:17'*/
+a();/*REF:a*/
 
-var f = /*DECL*/a/*DECL:{id:'local:f:'}*/;/*REF:'local:a:17'*/
+var f = /*DEF*/a/*DEF:{path:'f',local:false}*/;/*REF:a*/
 
-var g/*DECLID:'local:g:'*/ = /*DECL*/function(/*DECL1*/h/*DECL1:{id:'local:h:276'}*/) {
-  return h;/*REF:'local:h:276'*/
-}/*DECL:{id:'local:g:'}*/;
+var g/*DECLID:g,local*/ = /*DEF*/function(/*DEF1*/h/*DEF1:{path:'g.h',local:true}*/) {
+  return h;/*REF:g.h,local*/
+}/*DEF:{path:'g',local:false}*/;

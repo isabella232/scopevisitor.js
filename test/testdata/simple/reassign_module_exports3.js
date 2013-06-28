@@ -1,5 +1,5 @@
 module.exports = f.f1 = f;
 
-/*DECL*/function f() {}/*DECL:{id:'reassign_module_exports3.js'}*/
+/*DEF*/function f() {}/*DEF:{path:'exports'}*/
 
-f.f3 = /*DECL*/function() {}/*DECL:{id:'reassign_module_exports3.js/exports.f3'}*/;
+f.f3 = /*DEF*/function() {}/*DEF:{path:'exports.f3'}*/;

@@ -1,4 +1,4 @@
-module.exports.a/*DECLID:'/exports.a'*/ = module.exports.b/*DECLID:'/exports.b'*/ = /*DECL*/function() {}/*DECL:{id:'/exports.b'}*/;
+module.exports.a/*DECLID:exports.a*/ = module.exports.b/*DECLID:exports.b*/ = /*DEF*/function() {}/*DEF:{path:'exports.b'}*/;
 
-module.exports.c/*DECLID:'/exports.c'*/ = module.exports.d = e;
-/*DECL*/function e/*DECLID:'/exports.d'*/() {}/*DECL:{id:'/exports.d'}*/
+module.exports.c/*DECLID:exports.c*/ = module.exports.d/*DECLID:exports.d*/ = e;
+/*DEF*/function e() {}/*DEF:{path:'exports.d'}*/

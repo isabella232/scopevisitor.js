@@ -12,14 +12,14 @@
 
   /** Detect free variable `exports` */
   var freeExports = objectTypes[typeof exports] && exports;
-  freeExports/*REF:'complex_node_exports.js'*/;
+  freeExports/*REF:exports*/;
 
   /** Detect free variable `module` */
   var freeModule = objectTypes[typeof module] && module && module.exports == freeExports && module;
-  freeModule/*REF:'complex_node_exports.js'*/;
+  freeModule/*REF:module,,@node*/;
 
-  var _ = /*DECL*/function(){}/*DECL:{id:'complex_node_exports.js'}*/;
-  _.b = /*DECL*/function(){}/*DECL:{id:'complex_node_exports.js/exports.b'}*/;
+  var _ = /*DEF*/function(){}/*DEF:{path:'exports'}*/;
+  _.b = /*DEF*/function(){}/*DEF:{path:'exports.b'}*/;
   if (freeExports && !freeExports.nodeType) {
     // in Node.js or RingoJS v0.8.0+
     if (freeModule) {
@@ -30,4 +30,7 @@
       freeExports._ = _;
     }
   }
+
+  _;/*REF:exports._*/
+  objectTypes;/*REF_DISABLED(need to traverse locals):whatever.objectTypes*/
 }(this))

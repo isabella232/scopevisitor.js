@@ -1,8 +1,8 @@
 module.exports = {
-  a/*DECLID:'reassign_module_exports1.js/exports.a'*/: /*DECL*/function(){}/*DECL:{id:'reassign_module_exports1.js/exports.a'}*/,
+  a/*DECLID:exports.a*/: /*DEF*/function(){}/*DEF:{path:'exports.a'}*/,
   b: b
 };
 
-module.exports.c/*DECLID:'reassign_module_exports1.js/exports.c'*/ = /*DECL*/function(){}/*DECL:{id:'reassign_module_exports1.js/exports.c'}*/;
+module.exports.c/*DECLID:exports.c*/ = /*DEF*/function(){}/*DEF:{path:'exports.c'}*/;
 
-/*DECL*/function b(){}/*DECL:{id:'reassign_module_exports1.js/exports.b'}*/
+/*DEF*/function b(){}/*DEF:{path:'exports.b'}*/

@@ -1,13 +1,12 @@
-var a/*DECLID:'local:a:4'*/ = /*DECL*/7/*DECL:{id:'local:a:'}*/;
+var a/*DECLID:a,local*/ = /*DEF*/7/*DEF:{path:'a',local:true}*/;
 
-a /*REF:'local:a:4'*/
+a /*REF:a,local*/
 
-a /*REF:'local:a:4'*/ = 7;
+a /*REF:a,local*/ = 7;
 
-var b/*DECLID:'local:b:'*/ = {
+var b/*DECLID:b,local*/ = {
 
-  // TODO(sqs): commented out since we don't support local object field vars
-  c/*#DECLID:'local:c:'*/: /*#DECL*/7/*DECL:{id:'local:c:'}*/,
+  c/*DECLID:c,local*/: /*DEF*/7/*DEF:{path:'c',local:true}*/,
 };
 
-b/*REF:'local:b:'*/.c = 9;
+b/*REF:b,local*/.c = 9;
