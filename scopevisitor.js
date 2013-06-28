@@ -8,8 +8,6 @@ exports.inspect = function(targetOrigins, scope, c) {
   visitScope(scope, c);
 
   function visitScope(scope, c, path, local) {
-    if (!(scope instanceof infer.Scope))
-      throw new Error('scope must be instanceof infer.Scope');
     var pathPrefix = path ? path + '.' : '';
     for (var v in scope.props) {
       visitAVal(scope.props[v], c, pathPrefix + v, local);
