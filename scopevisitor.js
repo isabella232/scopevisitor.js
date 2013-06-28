@@ -56,7 +56,7 @@ exports.inspect = function(targetOrigins, scope, c) {
         if (isTarget(pv.origin))
           visitAVal(pv, c, path + '.' + prop, local);
       });
-      if (isTarget(origin) && typ instanceof infer.Fn && typ.originNode) {
+      if (isTarget(origin) && typ.originNode && typ.originNode.body) {
         visitScope(typ.originNode.body.scope, c, path, true);
       }
     }
