@@ -17,7 +17,7 @@ exports.inspect = function(targetOrigins, scope, c) {
   function visitAVal(av, c, path, local) {
     if (seen.indexOf(av) !== -1) return;
     seen.push(av);
-    var typ = av.getType(false);
+    var typ = av.getType(false) || av.getFunctionType();
     var origin = (typ || {}).origin || av.origin;
     if (typ) {
       if (typ._path) {
