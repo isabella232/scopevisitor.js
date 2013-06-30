@@ -35,7 +35,12 @@ tern.defineQueryType('sourcegraph:symbols', {
 
       var defNode;
       if (av.originNode && (av.originNode.type === 'Identifier' || av.originNode.type === 'Literal')) {
-        defNode = defnode.findDefinitionNode(file.ast, av.originNode.start, av.originNode.end);
+        try {
+          defNode = defnode.findDefinitionNode(file.ast, av.originNode.start, av.originNode.end);
+        } catch (e) {
+          console.error(e);
+          return;
+        }
       }
 
       if (av.doc) sym.doc = av.doc;
