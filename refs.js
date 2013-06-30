@@ -25,12 +25,13 @@ tern.defineQueryType('sourcegraph:refs', {
           } else if (isNodeModule(av)) {
             setSymbol(ref, {path: 'exports.Module', origin: '@node'});
             ref.nodeStdlibModule = 'module'
-          } else if (isNodeExports(av)) {
-            setSymbol(ref, {path: 'exports', origin: file.name});
           } else {
             var typ = av.getType(false);
             if (typ) {
-              if (typ.originNode && typ.originNode._declSymbol) {
+              if (isNodeExports(av)) {
+                var typOrigin = getOriginOfNodeExportsSymbol(typ);
+                if (typOrigin) setSymbol(ref, {path: 'exports', origin: typOrigin});
+              } else if (typ.originNode && typ.originNode._declSymbol) {
                 setSymbol(ref, typ.originNode._declSymbol);
               } else if (storedDefOrigins.indexOf(typ.origin) > -1) {
                 if (typ.origin === 'node') {
@@ -39,14 +40,17 @@ tern.defineQueryType('sourcegraph:refs', {
                   setSymbol(ref, {path: typ.name, origin: '@' + typ.origin});
                 }
               } else {
-                // console.log('FOO', ident.name, typ.name, typ.origin);
+                setSymbol(ref, {path: 'exports.' + ident.name, origin: typ.origin || av.origin});
+                // console.error('FOO', 'ident=', ident.name, 'typ=', typ.name, typ.origin, av);
+                // console.error(typ);
               }
             } else {
-              // console.log('no type for expr at', ident.name, ident.start, ident.end, '\n', av, '\n', util.getType(server, file, ident));
+              // console.error('no type for expr at', ident.name, ident.start, ident.end);
+              // console.error('\n', av, '\n', util.getType(server, file, ident));
             }
           }
         } else {
-          // console.log('no expr at ', ident.name, ident.start, ident.end, util.getType(server, file, ident));
+          // console.error('no expr at ', ident.name, ident.start, ident.end, util.getType(server, file, ident));
         }
       }
 
@@ -92,27 +96,18 @@ function isNodeExports(av) {
   return false;
 }
 
-// getModuleRef takes a start+end containing an ident whose value is an node.js module's exports
-// (e.g., "var m = require('foo')"), and returns the module's filename.
-function getModuleRef(server, file, start, end) {
-  try {
-    var decl = infer.findExpressionAt(file.ast, start, end, file.scope);
-  } catch(e) {}
+// getOriginOfNodeExportsSymbol takes an infer.Type that is a node exports symbol and finds the
+// origin it was defined in. For some reason, tern does not set the "origin" property on exports,
+// and so we must use this heuristic to determine the origin. This will fail for modules that define
+// no exports.
+function getOriginOfNodeExportsSymbol(typ) {
+  if (typ.origin) return typ.origin;
 
-  if (!decl) {
-    if (exports.debug) console.error('Failed to get decl of module ref at ' + file.name + ':' + start + '-' + end);
-    return;
-  }
-  // iterate over module props. this will fail if the module re-exports a def from another origin
-  // and we happen to iterate over it first here.
-  var moduleType = infer.expressionType(decl).types[0];
-  if (!moduleType) {
-    if (exports.debug) console.error('Module has no type at file ' + file.name + ':' + start + '-' + end);
-    return;
-  }
-  var moduleProps = moduleType.props;
+  var moduleProps = typ.props;
   // no hasOwnProperty check needed because moduleProps has a stripped object prototype (from tern)??
   for (var key in moduleProps) {
+    // TODO(sqs): pick the most common origin instead of just the first non-null origin? also, this
+    // is non-deterministic in the iteration order of object
     if (moduleProps[key].origin) return moduleProps[key].origin;
   }
 }

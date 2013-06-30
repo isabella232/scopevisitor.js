@@ -4,17 +4,17 @@ var astannotate = require('astannotate'),
     path = require('path'),
     should = require('should');
 
-var tern_support = require('../tern_support'), plugins = {};
-tern_support.loadPlugin(plugins, 'node', {});
-var server = tern_support.newServer([], plugins);
+var tern_support = require('../tern_support');
 require('../ast');
 require('../refs');
 require('../symbols');
 
 var debug = true;
 
-function graph(file, src, test) {
-  server.reset();
+function graph(dir, file, src, test) {
+  var plugins = {};
+  tern_support.loadPlugin(plugins, 'node', {});
+  var server = tern_support.newServer([], plugins, dir);
   server.addFile(file, src);
   var fileAST = server.files.filter(function(f) { return f.name == file; })[0].ast;
   server.flush(function(err) {
@@ -35,7 +35,7 @@ function graph(file, src, test) {
   });
 }
 
-function check(file, src, ast, r) {
+function check(dir, file, src, ast, r) {
   function mkDefVisitor(directive) {
     return astannotate.rangeVisitor(directive, null, function(range, x) {
       should.exist(range.node, range.node || ('No AST node found at range ' + JSON.stringify(range)));
@@ -71,6 +71,7 @@ function check(file, src, ast, r) {
     ref.symbol.should.eql(symbolPath);
     should.exist(ref.local, 'Ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' has no local property');
     should.equal(ref.local, symbolIsLocal, 'Expected ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' to have local=' + symbolIsLocal + ', got ' + ref.local);
+    origin = origin.replace('$DIR', dir);
     should.exist(ref.symbolOrigin, 'Ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' has no origin property');
     should.equal(ref.symbolOrigin, origin, 'Expected ref ' + JSON.stringify(info) + ' at AST node ' + identNode._id + ' to have origin=' + origin + ', got ' + ref.symbolOrigin);
   });
@@ -94,17 +95,20 @@ var testCases = [
     'complex_node_exports.js',
     'exports_and_locals.js',
     'chained_exports.js']},
+  {dir: 'node_modules/bar/node_modules/foo', files: ['foo.js']},
+  {dir: 'node_modules/bar', files: ['requires.js', 'index.js']},
 ];
 
 testCases.forEach(function(testCase) {
   describe('Case: ' + testCase.dir + '/', function() {
     testCase.files.forEach(function(filename) {
       it(filename, function(done) {
-        var file = path.join(__dirname, 'testdata', testCase.dir, filename);
+        var dir = path.join(__dirname, 'testdata', testCase.dir);
+        var file = path.join(dir, filename);
         var src = fs.readFile(file, 'utf8', function(err, src) {
           should.ifError(err);
-          graph(file, src, function(ast, r) {
-            check(file, src, ast, r);
+          graph(dir, file, src, function(ast, r) {
+            check(dir, file, src, ast, r);
             done();
           });
         });

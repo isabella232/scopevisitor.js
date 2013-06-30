@@ -23,6 +23,12 @@ describe('Refs', function() {
     });
   }
 
+  function withoutRequireRef(refs) {
+    return refs.filter(function(ref) {
+      return ref.symbol !== 'exports.require';
+    });
+  }
+
   it('omits <top> symbol (e.g., global this)', function(done) {
     // TODO(sqs): this is actually a bug that deserves more examination
     requestRefs(';(function(w){}(this))', function(res) {
@@ -75,6 +81,22 @@ describe('Refs', function() {
             symbolOrigin: '@node',
             nodeStdlibModule: 'module',
           }
+        ]
+      );
+      done();
+    });
+  });
+  it('returns a ref to external, user-defined module', function(done) {
+    requestRefs('require("./test/testdata/b").x', function(res) {
+      withoutRequireRef(res).should.eql(
+        [
+          {
+            astNode: '/Program/body/0/ExpressionStatement/expression/MemberExpression/property/Identifier',
+            kind: 'ident',
+            symbol: 'exports.x',
+            local: false,
+            symbolOrigin: 'test/testdata/b.js',
+          },
         ]
       );
       done();

@@ -31,13 +31,14 @@ exports.loadPlugin = function(plugins, name, val) {
   plugins[path.basename(name, '.js')] = val;
 }
 
-exports.newServer = function(defs, plugins) {
+exports.newServer = function(defs, plugins, dir) {
+  if (!dir) dir = localDir;
   exports.loadDef(defs, 'ecma5');
   return new tern.Server({
-    getFile: function(file) { return fs.readFileSync(path.resolve(localDir, file), 'utf8'); },
+    getFile: function(file) { return fs.readFileSync(path.resolve(dir, file), 'utf8'); },
     defs: defs,
     plugins: plugins,
     debug: true,
-    projectDir: localDir
+    projectDir: dir
   });
 };
