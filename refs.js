@@ -145,7 +145,7 @@ function getNonFuncValueRecursively(server, file, node, seen) {
     if (!defFile.ast._sourcegraph_symbols) {
       // assumes that this runs synchronously
       server.request({
-        query: {type: 'sourcegraph:symbols', file: defFile.name}}, function(err, res) {
+        query: {type: 'sourcegraph:symbols', file: path.resolve(defFile.name)}}, function(err, res) {
           if (err) throw err;
         });
     }
