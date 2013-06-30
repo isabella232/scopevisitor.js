@@ -17,3 +17,5 @@ Contributors
 ============
 
 * Quinn Slack <sqs@sourcegraph.com>
+
+Contains code from Marijn Haverbeke's [marijnh/tern](https://github.com/marijnh/tern).

@@ -9,4 +9,4 @@ if (typeof exports !== 'undefined') {
 }
 
 (exports/*REF:exports*/ || window).d/*DECLID:exports.d*/ = function(){};
-((module/*REF:module,,@node*/ && module.exports/*REF:exports*/) || window).e/*DECLID:exports.e*/ = function(){};
+((module/*REF:exports.Module,,@node*/ && module.exports/*REF:exports*/) || window).e/*DECLID:exports.e*/ = function(){};

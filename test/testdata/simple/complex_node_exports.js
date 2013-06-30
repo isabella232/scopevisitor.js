@@ -16,7 +16,7 @@
 
   /** Detect free variable `module` */
   var freeModule = objectTypes[typeof module] && module && module.exports == freeExports && module;
-  freeModule/*REF:module,,@node*/;
+  freeModule/*REF:exports.Module,,@node*/;
 
   var _ = /*DEF*/function(){}/*DEF:{path:'exports'}*/;
   _.b = /*DEF*/function(){}/*DEF:{path:'exports.b'}*/;

@@ -1,6 +1,7 @@
 var should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {ast: true});
+var server = require('../tern_support').newServer([]);
+require('../ast');
 
 describe('AST', function() {
   function nodeInfo(node) {

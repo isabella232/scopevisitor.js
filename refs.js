@@ -8,7 +8,6 @@ exports.debug = false;
 tern.defineQueryType('sourcegraph:refs', {
   takesFile: true,
   run: function(server, query, file) {
-    if (!server.options.plugins.node) throw new Error('node plugin not loaded');
     if (!file.ast._sourcegraph_symbols) throw new Error('AST not yet annotated with local symbol decls: ' + file.name);
 
     var refs = [];
@@ -24,7 +23,8 @@ tern.defineQueryType('sourcegraph:refs', {
           if (av.originNode && av.originNode._declSymbol) {
             setSymbol(ref, av.originNode._declSymbol);
           } else if (isNodeModule(av)) {
-            setSymbol(ref, {path: 'module', origin: '@node'});
+            setSymbol(ref, {path: 'exports.Module', origin: '@node'});
+            ref.nodeStdlibModule = 'module'
           } else if (isNodeExports(av)) {
             setSymbol(ref, {path: 'exports', origin: file.name});
           } else {

@@ -12,9 +12,6 @@ exports.debug = false;
 tern.defineQueryType('sourcegraph:symbols', {
   takesFile: true,
   run: function(server, query, file) {
-    if (!server.options.plugins.doc_comment) throw new Error('doc_comment plugin not loaded');
-    if (!server.options.plugins.node) throw new Error('node plugin not loaded');
-
     if (!file.ast._id) {
       // file AST nodes have not been assigned IDs by idast
       idast.assignIds(file.ast);
@@ -22,7 +19,7 @@ tern.defineQueryType('sourcegraph:symbols', {
 
     var symbols = [];
 
-    server._node.modules[file.name].propagate(server.cx.topScope.defProp('exports'));
+    if (server.options.plugins.node) server._node.modules[file.name].propagate(server.cx.topScope.defProp('exports'));
     scopevisitor.inspect([file.name], server.cx.topScope, function(path, av, local, alias) {
       var sym = {
         origin: file.name,

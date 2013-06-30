@@ -1,6 +1,12 @@
 var should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, symbols: true});
+var tern_support = require('../tern_support'), plugins = {};
+tern_support.loadPlugin(plugins, 'node', {});
+tern_support.loadPlugin(plugins, 'doc_comment', {});
+var server = tern_support.newServer([], plugins);
+require('../ast');
+require('../refs');
+require('../symbols');
 
 require('../symbols').debug = true;
 

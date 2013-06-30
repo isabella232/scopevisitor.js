@@ -35,4 +35,4 @@ module.exports.e;/*REF:exports.e*/
 // TODO(sqs): handle Literals
 module.exports['e'];/*REF_DISABLED:exports.e*/
 
-module;/*REF:module,,@node*/
+module;/*REF:exports.Module,,@node*/

@@ -4,7 +4,12 @@ var astannotate = require('astannotate'),
     path = require('path'),
     should = require('should');
 
-var server = require('../tern_server').startTernServer('.', {doc_comment: true, node: true, refs: true, symbols: true});
+var tern_support = require('../tern_support'), plugins = {};
+tern_support.loadPlugin(plugins, 'node', {});
+var server = tern_support.newServer([], plugins);
+require('../ast');
+require('../refs');
+require('../symbols');
 
 var debug = true;
 
