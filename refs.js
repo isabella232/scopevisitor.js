@@ -1,5 +1,5 @@
 var util = require('./util');
-var assert = require('assert'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
+var assert = require('assert'), defnode = require('defnode'), idast = require('idast'), idents = require('javascript-idents'), infer = require('tern/lib/infer'), path = require('path'), tern = require('tern'), walk = require('acorn/util/walk'), walkall = require('walkall');
 
 exports.debug = false;
 
@@ -39,9 +39,14 @@ tern.defineQueryType('sourcegraph:refs', {
                 } else {
                   setSymbol(ref, {path: typ.name, origin: '@' + typ.origin});
                 }
+              } else if (/^exports\./.test(typ.name)) {
+                setSymbol(ref, {path: typ.name, origin: typ.origin});
               } else {
-                setSymbol(ref, {path: 'exports.' + ident.name, origin: typ.origin || av.origin});
-                // console.error('FOO', 'ident=', ident.name, 'typ=', typ.name, typ.origin, av);
+                try {
+                  var info = getNonFuncValueRecursively(server, file, ident);
+                  if (info) setSymbol(ref, info);
+                } catch (e) {}
+//                console.error('FOO', 'ident=', ident.name, 'typ=', typ.name, typ.origin, typ, util.getDefinition(server, file, ident));
                 // console.error(typ);
               }
             } else {
@@ -124,6 +129,38 @@ function getDeclIdNode(file, start, end) {
   }
   // TODO(sqs): eliminate cases where this error occurs:
   // console.error('No DeclIdNode at file ' + file.name + ':' + start + '-' + end);
+}
+
+// a ref to a non-func value defined in an external module
+function getNonFuncValueRecursively(server, file, ident) {
+  // console.error('getNonFuncValueDefinedExternally for ident', ident, 'in file', file.name);
+  var def = util.getDefinition(server, file, ident);
+  if (def) {
+    var defFile = server.files.filter(function(f) { return f.name === def.file; });
+    if (!defFile) return;
+    defFile = defFile[0];
+    if (!defFile.ast._sourcegraph_symbols) {
+      // assumes that this runs synchronously
+      server.request({
+        query: {type: 'sourcegraph:symbols', file: defFile.name}}, function(err, res) {
+          if (err) throw err;
+        });
+    }
+    var defExpr = tern.findQueryExpr(defFile, {start: def.start, end: def.end});
+    if (!defExpr) return;
+
+    // if we have e.g. 'var D = foomodule.B', then we want to find the expressionType of
+    // foomodule.B, not of 'var D' (which is just in this same file), so let's just recurse on the RHS
+    if (defExpr.node == ident) {
+      defExpr.node = defnode.findDefinitionNode(defFile.ast, defExpr.node.start, defExpr.node.end);
+      return getNonFuncValueRecursively(server, defFile, defExpr.node);
+    }
+
+    var defType = infer.expressionType(defExpr)
+    if (defType && defType.originNode && defType.originNode._declSymbol) {
+      return {path: defType.originNode._declSymbol.path, origin: defFile.name};
+    }
+  }
 }
 
 var storedDefOrigins = ['ecma5', 'node', 'jquery', 'requirejs', 'browser'];
