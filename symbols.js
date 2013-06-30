@@ -33,12 +33,19 @@ tern.defineQueryType('sourcegraph:symbols', {
         sym.typeExpr = typ.toString(1);
       }
 
+      var defNode;
+      if (av.originNode && (av.originNode.type === 'Identifier' || av.originNode.type === 'Literal')) {
+        defNode = defnode.findDefinitionNode(file.ast, av.originNode.start, av.originNode.end);
+      }
+
       if (av.doc) sym.doc = av.doc;
       else if (typ) sym.doc = typ.doc;
 
       if (typ && typ.originNode) {
-        sym.defNode = typ.originNode._id;
-        typ.originNode._declSymbol = sym;
+        if (!(defNode && defNode.type === 'CallExpression')) {
+          sym.defNode = typ.originNode._id;
+          typ.originNode._declSymbol = sym;
+        }
       }
       if (av.originNode) {
         if (av.originNode.type === 'Identifier' || av.originNode.type === 'Literal') {
@@ -46,12 +53,9 @@ tern.defineQueryType('sourcegraph:symbols', {
             sym.declIdentNode = av.originNode._id;
             av.originNode._declSymbol = sym;
           }
-          if (!sym.defNode) {
-            var defNode = defnode.findDefinitionNode(file.ast, av.originNode.start, av.originNode.end);
-            if (defNode) {
-              sym.defNode = defNode._id;
-              defNode._declSymbol = sym;
-            }
+          if (!sym.defNode && defNode) {
+            sym.defNode = defNode._id;
+            defNode._declSymbol = sym;
           }
         } else {
           if (!sym.defNode) {

@@ -88,6 +88,7 @@ var testCases = [
     // 'local_funcs.js',
     'node_stdlib.js',
     'node_exports.js',
+    'def.js',
     'reassign_module_exports1.js',
     'reassign_module_exports2.js',
     'reassign_module_exports3.js',
