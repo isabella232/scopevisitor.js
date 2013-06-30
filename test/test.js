@@ -96,7 +96,7 @@ var testCases = [
     'exports_and_locals.js',
     'chained_exports.js']},
   {dir: 'node_modules/bar/node_modules/foo', files: ['foo.js']},
-  {dir: 'node_modules/bar', files: ['requires.js', 'index.js']},
+  {dir: 'node_modules/bar', files: ['requires.js', 'index.js', 'modfunc_call.js']},
 ];
 
 testCases.forEach(function(testCase) {
