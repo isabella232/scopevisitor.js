@@ -132,9 +132,12 @@ function getDeclIdNode(file, start, end) {
 }
 
 // a ref to a non-func value defined in an external module
-function getNonFuncValueRecursively(server, file, ident) {
-  // console.error('getNonFuncValueDefinedExternally for ident', ident, 'in file', file.name);
-  var def = util.getDefinition(server, file, ident);
+function getNonFuncValueRecursively(server, file, node, seen) {
+  if (!seen) seen = [];
+  if (seen.indexOf(node) > -1) return;
+  seen.push(node);
+  // console.error('getNonFuncValueDefinedExternally for node', node, 'in file', file.name);
+  var def = util.getDefinition(server, file, node);
   if (def) {
     var defFile = server.files.filter(function(f) { return f.name === def.file; });
     if (!defFile) return;
@@ -151,9 +154,10 @@ function getNonFuncValueRecursively(server, file, ident) {
 
     // if we have e.g. 'var D = foomodule.B', then we want to find the expressionType of
     // foomodule.B, not of 'var D' (which is just in this same file), so let's just recurse on the RHS
-    if (defExpr.node == ident) {
+    if (defExpr.node == node) {
       defExpr.node = defnode.findDefinitionNode(defFile.ast, defExpr.node.start, defExpr.node.end);
-      return getNonFuncValueRecursively(server, defFile, defExpr.node);
+      if (defExpr.node.id) defExpr.node = defExpr.node.id;
+      return getNonFuncValueRecursively(server, defFile, defExpr.node, seen);
     }
 
     var defType = infer.expressionType(defExpr)
