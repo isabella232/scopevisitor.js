@@ -13,7 +13,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "tern": "0.3.0"
+    "tern": "git://github.com/sqs/tern.git#dev"
   },
   "devDependencies": {
     "astannotate": "0.0.2",
