@@ -43,8 +43,15 @@ exports.inspect = function(targetOrigins, scope, c) {
       // Make sure we're using the node plugin.
       var mType = scope.getProp('module').getType();
       if (mType && mType.origin == 'node') {
-        av.originNode = (av.getType(false) || av.getFunctionType()).originNode;
-        if (av.originNode && av.originNode.type == 'FunctionDeclaration') av.originNode = av.originNode.id;
+        var typ2 = (av.getType(false) || av.getFunctionType());
+        if (!typ2) {
+          typ2 = av.types[1].getType();
+        }
+        if (typ2) {
+          // TODO(sqs): we can probably figure out the origin from what we have here
+          av.originNode = typ2.originNode;
+          if (av.originNode && av.originNode.type == 'FunctionDeclaration') av.originNode = av.originNode.id;
+        }
       }
     }
 
