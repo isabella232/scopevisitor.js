@@ -67,6 +67,9 @@ describe('inspect', function() {
           });
           visitor(text, server.files[0].ast);
 
+          // The inline directive /*NOPATH:pathregex*/ where pathregex is a
+          // regular expression causes the test to fail if any of the symbols in
+          // the file have a path that matches the pathregex.
           var re = new RegExp('/\\*NOPATH:(.*?)\\*/', 'g'), m;
           var allpaths = [].concat(Object.keys(locals), Object.keys(nonlocals));
           while ((m = re.exec(text)) !== null) {
