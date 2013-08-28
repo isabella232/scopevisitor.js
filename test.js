@@ -43,8 +43,8 @@ describe('inspect', function() {
             if (alias) aliases[local ? 'local' : 'nonlocal'][path] = alias;
           });
 
-          // Parse inline directives of the form:
-          // /*DEF:<path>:<local>:<alias>*/
+          // The inline directive DEF causes the test to fail if the specified
+          // definition is not found. The directive is of the form /*DEF:<path>:<local>:<alias>*/,
           // where <path> is the def's path, <local> is either 'local' or 'nonlocal' (without quotes),
           // and <alias> is the path of the destination def for this alias def. Options <local> and
           // <alias> are optional.
