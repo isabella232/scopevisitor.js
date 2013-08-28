@@ -21,6 +21,7 @@ var tests = [
   {path: 'node_exports_reassign.js', plugins: ['node']},
   {path: 'node_exports_reassign2.js', plugins: ['node']},
   {path: 'node_exports_reassign3.js', plugins: ['node']},
+  {path: 'node-complex-exports/extra.js', plugins: ['node']},
 ];
 
 describe('inspect', function() {
